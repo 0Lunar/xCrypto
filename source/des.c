@@ -1,29 +1,28 @@
-#include <xcrypto.h>
+#include "des.h"
 
 
 struct des_cipher
 {
-    uint8_t block[8];
+    uint64_t block;
     uint8_t key[8];
     uint8_t subkeys[16][8];
 };
 
 
 
-static void InitialPermutation(struct des_cipher *cipher) {
-    uint64_t block = *(uint64_t *)cipher->block;
-    uint64_t result;
-    uint8_t shift;
+static void initialPermutation(struct des_cipher *cipher) {
+    uint64_t block = cipher->block;
+    uint32_t left, right;
+    uint32_t temp;
 
-    if (!IS_LITTLE_ENDIAN()) {
-        for (int n = 0; n < 64; n++) {
-            shift = _des_ip_table[n] - 1;
-            result |= ((block >> shift) & 0x1) << (63 - n);
-        }
-    }
-    else {
-        // TODO LITTLE ENDIAN SUPPORT
-    }
+    left =  (block >> 32) & 0xFFFFFFFF;
+    right = block & 0xFFFFFFFF;
 
-    *(uint64_t *)cipher->block = result;
+    PERM_OP(right, left,  temp, 4, 0x0f0f0f0f);
+    PERM_OP(left,  right, temp, 16, 0x0000ffff);
+    PERM_OP(right, left,  temp, 2, 0x33333333);
+    PERM_OP(left,  right, temp, 8, 0x00ff00ff);
+    PERM_OP(right, left,  temp, 1, 0x55555555);
+
+    cipher->block = ((uint64_t)(right)) << 32 | left;
 }

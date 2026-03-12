@@ -159,6 +159,36 @@ void _des_encryptor(struct des_cipher *cipher, const uint8_t *plaintext) {
 }
 
 
+void _des_decryptor(struct des_cipher *cipher, const uint8_t *ciphertext) {
+    uint32_t L, R, new_R;
+    uint64_t expanded_r_block;
+ 
+    cipher->block = ((uint64_t)ciphertext[0] << 56) |
+                    ((uint64_t)ciphertext[1] << 48) |
+                    ((uint64_t)ciphertext[2] << 40) |
+                    ((uint64_t)ciphertext[3] << 32) |
+                    ((uint64_t)ciphertext[4] << 24) |
+                    ((uint64_t)ciphertext[5] << 16) |
+                    ((uint64_t)ciphertext[6] <<  8) |
+                    ((uint64_t)ciphertext[7]);
+ 
+    initialPermutation(cipher);
+ 
+    L = (uint32_t)(cipher->block >> 32);
+    R = (uint32_t)(cipher->block & 0xFFFFFFFF);
+ 
+    for (int round = 0; round < DES_ROUNDS; round++) {
+        expanded_r_block = expansionPermutation(R) ^ cipher->subkeys[DES_ROUNDS - 1 - round];
+        new_R = transposition(substitution(expanded_r_block)) ^ L;
+        L = R;
+        R = new_R;
+    }
+ 
+    cipher->block = ((uint64_t)R << 32) | L;
+    finalPermutation(cipher);
+}
+
+
 struct des_cipher *des_init(const uint8_t *key) {
     struct des_cipher *cipher;
 
@@ -180,7 +210,19 @@ struct des_cipher *des_init(const uint8_t *key) {
 }
 
 
-void des_free(struct des_cipher *cipher) {
+void free_des(struct des_cipher *cipher) {
     if (cipher)
         free(cipher);
+}
+
+
+void des_block( struct des_cipher *cipher, uint8_t *out ) {
+    out[0] = (uint8_t)((cipher->block >> 56) & 0xFF);
+    out[1] = (uint8_t)((cipher->block >> 48) & 0xFF);
+    out[2] = (uint8_t)((cipher->block >> 40) & 0xFF);
+    out[3] = (uint8_t)((cipher->block >> 32) & 0xFF);
+    out[4] = (uint8_t)((cipher->block >> 24) & 0xFF);
+    out[5] = (uint8_t)((cipher->block >> 16) & 0xFF);
+    out[6] = (uint8_t)((cipher->block >>  8) & 0xFF);
+    out[7] = (uint8_t)( cipher->block        & 0xFF);
 }

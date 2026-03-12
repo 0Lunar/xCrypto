@@ -14,10 +14,10 @@
 struct aes_cipher;
 
 
-struct aes_cipher * aes_init(const unsigned char *key, size_t keyLength);
-void free_aes(struct aes_cipher *cipher, bool dynamic);
-void _aes_encryptor(struct aes_cipher *cipher, const uint8_t *plaintext);
-void _aes_decryptor(struct aes_cipher *cipher, const uint8_t *ciphertext);
+struct aes_cipher * aes_init( const uint8_t *key, size_t keyLength );
+void free_aes( struct aes_cipher *cipher, bool dynamic );
+void _aes_encryptor( struct aes_cipher *cipher, const uint8_t *plaintext );
+void _aes_decryptor( struct aes_cipher *cipher, const uint8_t *ciphertext );
 
 
 extern const uint8_t _aes_sbox[];

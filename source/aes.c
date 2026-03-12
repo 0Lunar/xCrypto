@@ -15,7 +15,7 @@ struct aes_cipher {
 static const uint8_t rcon[] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36};
 
 
-static void RotWord(uint8_t word[4]) {
+static void RotWord( uint8_t word[4] ) {
     if (!IS_LITTLE_ENDIAN())
         *(uint32_t *)word = *(uint32_t *)word << 8 | *(uint32_t *)word >> 24;
     else
@@ -23,7 +23,7 @@ static void RotWord(uint8_t word[4]) {
 }
 
 
-static void SubWord(uint8_t word[4]) {
+static void SubWord( uint8_t word[4] ) {
     word[0] = _aes_sbox[word[0]];
     word[1] = _aes_sbox[word[1]];
     word[2] = _aes_sbox[word[2]];
@@ -31,7 +31,7 @@ static void SubWord(uint8_t word[4]) {
 }
 
 
-static void keyExpansion(struct aes_cipher *cipher) {
+static void keyExpansion( struct aes_cipher *cipher ) {
     const uint8_t Nb = 4;
     uint8_t Nk = (cipher->key_size >> 2) & 0xFF;
     uint8_t Nr = 6 + Nk;
@@ -65,7 +65,7 @@ static void keyExpansion(struct aes_cipher *cipher) {
 }
 
 
-static void addRoundKey(struct aes_cipher *cipher, uint32_t round) {
+static void addRoundKey( struct aes_cipher *cipher, uint32_t round ) {
 #if defined(__x86_64__) || defined(_M_X64)
     *(uint64_t *)cipher->state ^= *(uint64_t *)cipher->roundKey[round];
     *(uint64_t *)(cipher->state + 8) ^= *(uint64_t *)(cipher->roundKey[round] + 8);
@@ -83,19 +83,19 @@ static void addRoundKey(struct aes_cipher *cipher, uint32_t round) {
 }
 
 
-static void SubBytes(struct aes_cipher *cipher) {
+static void SubBytes( struct aes_cipher *cipher ) {
     for (int n = 0; n < AES_BLOCK_SIZE; n++)
         cipher->state[n] = _aes_sbox[ cipher->state[n] ];
 }
 
 
-static void UnSubBytes(struct aes_cipher *cipher) {
+static void UnSubBytes( struct aes_cipher *cipher ) {
     for (int n = 0; n < AES_BLOCK_SIZE; n++)
         cipher->state[n] = _aes_rsbox[ cipher->state[n] ];
 }
 
 
-static void ShiftRows(struct aes_cipher *cipher) {
+static void ShiftRows( struct aes_cipher *cipher ) {
     uint8_t temp;
     uint8_t *state = cipher->state;
 
@@ -120,7 +120,7 @@ static void ShiftRows(struct aes_cipher *cipher) {
 }
 
 
-static void UnShiftRows(struct aes_cipher *cipher) {
+static void UnShiftRows( struct aes_cipher *cipher ) {
     uint8_t temp;
     uint8_t *state = cipher->state;
 
@@ -145,7 +145,7 @@ static void UnShiftRows(struct aes_cipher *cipher) {
 }
 
 
-static void MixColumns(struct aes_cipher *cipher) {
+static void MixColumns( struct aes_cipher *cipher ) {
     uint8_t r[4];
     uint8_t a[4];
     uint8_t b[4];
@@ -171,7 +171,7 @@ static void MixColumns(struct aes_cipher *cipher) {
 }
 
 
-uint8_t gmul(uint8_t a, uint8_t b) {
+uint8_t gmul( uint8_t a, uint8_t b ) {
     uint8_t p = 0;
     uint8_t hi_bit_set;
     for (int i = 0; i < 8; i++) {
@@ -187,7 +187,7 @@ uint8_t gmul(uint8_t a, uint8_t b) {
 }
 
 
-static void UnMixColumns(struct aes_cipher *cipher) {
+static void UnMixColumns( struct aes_cipher *cipher ) {
     if (!cipher)
         return;
 
@@ -208,7 +208,7 @@ static void UnMixColumns(struct aes_cipher *cipher) {
 }
 
 
-void _aes_encryptor(struct aes_cipher *cipher, const uint8_t *plaintext) {
+void _aes_encryptor( struct aes_cipher *cipher, const uint8_t *plaintext ) {
     uint8_t rounds = 6 + ((cipher->key_size >> 2) & 0xFF);
 
     memcpy(cipher->state, plaintext, 16);
@@ -227,7 +227,7 @@ void _aes_encryptor(struct aes_cipher *cipher, const uint8_t *plaintext) {
 }
 
 
-void _aes_decryptor(struct aes_cipher *cipher, const uint8_t *ciphertext) {
+void _aes_decryptor( struct aes_cipher *cipher, const uint8_t *ciphertext ) {
     uint8_t rounds = 6 + ((cipher->key_size >> 2) & 0xFF);
 
     memcpy(cipher->state, ciphertext, 16);
@@ -244,7 +244,7 @@ void _aes_decryptor(struct aes_cipher *cipher, const uint8_t *ciphertext) {
 }
 
 
-struct aes_cipher * aes_init(const uint8_t *key, size_t keyLength) {
+struct aes_cipher * aes_init( const uint8_t *key, size_t keyLength ) {
     if (!(keyLength == 16 || keyLength == 24 || keyLength == 32))
         return NULL;
     
@@ -272,7 +272,10 @@ struct aes_cipher * aes_init(const uint8_t *key, size_t keyLength) {
 }
 
 
-void free_aes(struct aes_cipher *cipher, bool dynamic) {
+void free_aes( struct aes_cipher *cipher, bool dynamic ) {
+    if (!cipher)
+        return;
+
     memset(cipher->key, 0, cipher->key_size);
 
     if (dynamic)

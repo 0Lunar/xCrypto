@@ -11,7 +11,7 @@ struct des_cipher
 
 
 
-static void permutedChoice_1(struct des_cipher *cipher, uint32_t *C0, uint32_t *D0)
+static void permutedChoice_1( struct des_cipher *cipher, uint32_t *C0, uint32_t *D0 )
 {
     uint32_t c = 0, d = 0;
     uint64_t key = cipher->key;
@@ -27,7 +27,7 @@ static void permutedChoice_1(struct des_cipher *cipher, uint32_t *C0, uint32_t *
 }
 
 
-static uint64_t permutedChoice_2(uint32_t C, uint32_t D)
+static uint64_t permutedChoice_2( uint32_t C, uint32_t D )
 {
     uint64_t cd = ((uint64_t)C << 28) | D;
     uint64_t k  = 0;
@@ -41,7 +41,7 @@ static uint64_t permutedChoice_2(uint32_t C, uint32_t D)
 }
 
 
-static uint32_t leftShift(uint32_t val, uint8_t round) {
+static uint32_t leftShift( uint32_t val, uint8_t round ) {
     if (round == 1 || round == 2 || round == 9 || round == 16)
         return (val << 1 | val >> 27) & 0xFFFFFFF;
 
@@ -49,7 +49,7 @@ static uint32_t leftShift(uint32_t val, uint8_t round) {
 }
 
 
-void keyTransformation(struct des_cipher *cipher) {
+void keyTransformation( struct des_cipher *cipher ) {
     uint32_t C, D;
 
     permutedChoice_1(cipher, &C, &D);
@@ -63,7 +63,7 @@ void keyTransformation(struct des_cipher *cipher) {
 }
 
 
-static void initialPermutation(struct des_cipher *cipher) {
+static void initialPermutation( struct des_cipher *cipher ) {
     uint64_t out = 0;
     uint64_t block = cipher->block;
 
@@ -76,7 +76,7 @@ static void initialPermutation(struct des_cipher *cipher) {
 }
 
 
-static uint64_t expansionPermutation(uint32_t R) {
+static uint64_t expansionPermutation( uint32_t R ) {
     return
         (uint64_t)( R        & 0x00000001) << 47 |
         (uint64_t)((R >> 27) & 0x0000001F) << 42 |
@@ -91,7 +91,7 @@ static uint64_t expansionPermutation(uint32_t R) {
 }
 
 
-static uint32_t substitution(uint64_t expBlock) {
+static uint32_t substitution( uint64_t expBlock ) {
     uint32_t result = 0;
 
     for (int i = 0; i < 8; i++) {
@@ -105,7 +105,7 @@ static uint32_t substitution(uint64_t expBlock) {
 }
 
 
-static uint32_t transposition(uint32_t block) {
+static uint32_t transposition( uint32_t block ) {
     uint32_t res = 0;
 
     for (int n = 0; n < 32; n++)
@@ -115,7 +115,7 @@ static uint32_t transposition(uint32_t block) {
 }
 
 
-static void finalPermutation(struct des_cipher *cipher) {
+static void finalPermutation( struct des_cipher *cipher ) {
     uint64_t out = 0;
     uint64_t block = cipher->block;
 
@@ -128,7 +128,7 @@ static void finalPermutation(struct des_cipher *cipher) {
 }
 
 
-void _des_encryptor(struct des_cipher *cipher, const uint8_t *plaintext) {
+void _des_encryptor( struct des_cipher *cipher, const uint8_t *plaintext ) {
     uint32_t L, R, new_R;
     uint64_t expanded_r_block;
 
@@ -159,7 +159,7 @@ void _des_encryptor(struct des_cipher *cipher, const uint8_t *plaintext) {
 }
 
 
-void _des_decryptor(struct des_cipher *cipher, const uint8_t *ciphertext) {
+void _des_decryptor( struct des_cipher *cipher, const uint8_t *ciphertext ) {
     uint32_t L, R, new_R;
     uint64_t expanded_r_block;
  
@@ -189,7 +189,10 @@ void _des_decryptor(struct des_cipher *cipher, const uint8_t *ciphertext) {
 }
 
 
-struct des_cipher *des_init(const uint8_t *key) {
+struct des_cipher *des_init( const uint8_t *key ) {
+    if (!key)
+        return NULL;
+
     struct des_cipher *cipher;
 
     if ((cipher = (struct des_cipher *)malloc(sizeof(struct des_cipher))) == NULL)
@@ -210,13 +213,16 @@ struct des_cipher *des_init(const uint8_t *key) {
 }
 
 
-void free_des(struct des_cipher *cipher) {
+void free_des( struct des_cipher *cipher ) {
     if (cipher)
         free(cipher);
 }
 
 
 void des_block( struct des_cipher *cipher, uint8_t *out ) {
+    if (!cipher || !out)
+        return;
+
     out[0] = (uint8_t)((cipher->block >> 56) & 0xFF);
     out[1] = (uint8_t)((cipher->block >> 48) & 0xFF);
     out[2] = (uint8_t)((cipher->block >> 40) & 0xFF);

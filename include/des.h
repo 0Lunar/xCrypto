@@ -24,10 +24,10 @@
 struct des_cipher;
 
 
-struct des_cipher *des_init(const uint8_t *key);
-void free_des(struct des_cipher *cipher);
-void _des_encryptor(struct des_cipher *cipher, const uint8_t *plaintext);
-void _des_decryptor(struct des_cipher *cipher, const uint8_t *ciphertext);
+struct des_cipher *des_init( const uint8_t *key );
+void free_des( struct des_cipher *cipher );
+void _des_encryptor( struct des_cipher *cipher, const uint8_t *plaintext );
+void _des_decryptor( struct des_cipher *cipher, const uint8_t *ciphertext );
 void des_block( struct des_cipher *cipher, uint8_t *out );
 
 

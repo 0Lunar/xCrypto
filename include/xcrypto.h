@@ -5,6 +5,7 @@
 #include <stdbool.h>
 #include "aes.h"
 #include "des.h"
+#include "rsa.h"
 
 
 enum _cipher_modes {

@@ -208,7 +208,7 @@ static void UnMixColumns(struct aes_cipher *cipher) {
 }
 
 
-static void _aes_encryptor(struct aes_cipher *cipher, const uint8_t *plaintext) {
+void _aes_encryptor(struct aes_cipher *cipher, const uint8_t *plaintext) {
     uint8_t rounds = 6 + ((cipher->key_size >> 2) & 0xFF);
 
     memcpy(cipher->state, plaintext, 16);
@@ -227,7 +227,7 @@ static void _aes_encryptor(struct aes_cipher *cipher, const uint8_t *plaintext) 
 }
 
 
-static void _aes_decryptor(struct aes_cipher *cipher, const uint8_t *ciphertext) {
+void _aes_decryptor(struct aes_cipher *cipher, const uint8_t *ciphertext) {
     uint8_t rounds = 6 + ((cipher->key_size >> 2) & 0xFF);
 
     memcpy(cipher->state, ciphertext, 16);
@@ -269,30 +269,6 @@ struct aes_cipher * aes_init(const uint8_t *key, size_t keyLength) {
     keyExpansion(cipher);
 
     return cipher;
-}
-
-
-void aes_encrypt(struct aes_cipher *cipher, const uint8_t *plaintext, const size_t plaintextLenght, uint8_t *ciphertext) {
-    if (plaintextLenght % 16 != 0) {
-        return;
-    }
-    
-    for (int blk = 0; blk < plaintextLenght; blk += 16) {
-        _aes_encryptor(cipher, plaintext + blk);
-        memcpy(ciphertext + blk, cipher->state, 16);
-    }
-}
-
-
-void aes_decrypt(struct aes_cipher *cipher, const uint8_t *ciphertext, const size_t ciphertextLength, uint8_t *plaintext) {
-    if (ciphertextLength % 16 != 0) {
-        return;
-    }
-
-    for (int blk = 0; blk < ciphertextLength; blk += 16) {
-        _aes_decryptor(cipher, ciphertext + blk);
-        memcpy(plaintext + blk, cipher->state, 16);
-    }
 }
 
 

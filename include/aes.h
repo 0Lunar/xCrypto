@@ -8,6 +8,7 @@
 
 #define AES_BLOCK_SIZE 16
 #define AES_BLOCK_SIZE_BITS 128
+#define IS_LITTLE_ENDIAN() ((*(uint8_t*)&(uint16_t){1}) == 1)
 
 
 struct aes_cipher;
@@ -15,8 +16,8 @@ struct aes_cipher;
 
 struct aes_cipher * aes_init(const unsigned char *key, size_t keyLength);
 void free_aes(struct aes_cipher *cipher, bool dynamic);
-void aes_encrypt(struct aes_cipher *cipher, const uint8_t *plaintext, const size_t plaintextLenght, uint8_t *ciphertext);
-void aes_decrypt(struct aes_cipher *cipher, const uint8_t *ciphertext, const size_t ciphertextLength, uint8_t *plaintext);
+void _aes_encryptor(struct aes_cipher *cipher, const uint8_t *plaintext);
+void _aes_decryptor(struct aes_cipher *cipher, const uint8_t *ciphertext);
 
 
 extern const uint8_t _aes_sbox[];

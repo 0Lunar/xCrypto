@@ -1,7 +1,7 @@
 #include "rng.h"
 
 
-static void csprng_buf( void *buf, size_t len ) {
+void csprng_buf( void *buf, size_t len ) {
 #if defined(_WIN32)
     #include <bcrypt.h>
     BCryptGenRandom(NULL, buf, (ULONG)len, BCRYPT_USE_SYSTEM_PREFERRED_RNG);

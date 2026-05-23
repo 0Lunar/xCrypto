@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 
 #define AES_BLOCK_SIZE 16
@@ -11,7 +12,12 @@
 #define IS_LITTLE_ENDIAN() ((*(uint8_t*)&(uint16_t){1}) == 1)
 
 
-struct aes_cipher;
+struct aes_cipher {
+    size_t key_size;
+    uint8_t *key;
+    uint8_t state[16];
+    uint8_t roundKey[15][16];
+} __attribute__((aligned(16)));
 
 
 struct aes_cipher * aes_init( const uint8_t *key, size_t keyLength );

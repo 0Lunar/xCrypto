@@ -21,7 +21,12 @@
 #include <stdint.h>
 
 
-struct des_cipher;
+struct des_cipher
+{
+    uint64_t block;
+    uint64_t key;
+    uint64_t subkeys[16];
+};
 
 
 struct des_cipher *des_init( const uint8_t *key );

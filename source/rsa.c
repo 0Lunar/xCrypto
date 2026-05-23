@@ -2,16 +2,6 @@
 #include <stdlib.h>
 
 
-struct rsa_ctx {
-    mpz_t p;
-    mpz_t q;
-    mpz_t n;
-    mpz_t phi;
-    mpz_t e;
-    mpz_t d;
-};
-
-
 struct rsa_ctx *rsa_init( size_t keySize, mpz_t exponent ) {
     struct rsa_ctx *ctx;
 

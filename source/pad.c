@@ -30,9 +30,8 @@ uint8_t *pkcs7_unpad( const uint8_t *padded, const size_t paddedLen ) {
     msgLen = paddedLen - (size_t)padch;
 
     for ( size_t n = paddedLen - 2; n >= msgLen; n-- ) {
-        if (padded[n] != padch) {
+        if (padded[n] != padch)
             return NULL;
-        }
     }
 
     if ((msg = (uint8_t *)malloc(msgLen)) == NULL)

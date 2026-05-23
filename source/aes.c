@@ -1,15 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <xcrypto.h>
-
-
-struct aes_cipher {
-    size_t key_size;
-    uint8_t *key;
-    uint8_t state[16];
-    uint8_t roundKey[15][16];
-} __attribute__((aligned(16)));
+#include "aes.h"
 
 
 static const uint8_t rcon[] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36};

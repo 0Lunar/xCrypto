@@ -38,7 +38,8 @@ enum _cipher_op_state {
     CIPHER_ERR_MISSING_ALGO,
     CIPHER_ERR_INVALID_BLOCK_SIZE,
     CIPHER_ERR_INVALID_PLAINTEXT_SIZE,
-    CIPHER_ERR_INVALID_CIPHERTEXT_SIZE
+    CIPHER_ERR_INVALID_CIPHERTEXT_SIZE,
+    CIPHER_ERR_MISSING_IV
 };
 
 
@@ -65,7 +66,7 @@ CipherCtx *NewCipher( void );
 CipherError CipherSetAlgorithm(CipherCtx *ctx, Ciphers cipher);
 CipherError CipherSetKey(CipherCtx *ctx, uint8_t *key, size_t keyLength);
 CipherError CipherSetMode(CipherCtx *ctx, CipherModes mode);
-CipherError CipherSetIV(CipherCtx *ctx, const uint8_t *iv);
+CipherError CipherSetIV(CipherCtx *ctx, const uint8_t *iv, size_t ivLen);
 CipherError CipherEncrypt(CipherCtx *ctx, uint8_t *plaintext, size_t plaintextLength);
 CipherError CipherDecrypt(CipherCtx *ctx, uint8_t *ciphertext, size_t ciphertextLength);
 uint8_t *CipherFinalize(CipherCtx *ctx);
@@ -73,7 +74,7 @@ CipherError FreeCiphertext(CipherCtx *ctx);
 CipherError CipherReset(CipherCtx *ctx, CipherResetMode mode);
 CipherError GetError(CipherCtx *ctx);
 
-extern const char *GetErrorString[];
+extern const uint8_t *GetErrorString[];
 
 
 #endif

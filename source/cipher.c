@@ -122,7 +122,7 @@ CipherError CipherSetMode(CipherCtx *ctx, CipherModes mode) {
 }
 
 
-CipherError CipherSetIV(CipherCtx *ctx, const uint8_t *iv) {
+CipherError CipherSetIV(CipherCtx *ctx, const uint8_t *iv, size_t ivLen) {
     if (!ctx)
         return CIPHER_ERR_NULL_PTR;
     
@@ -131,32 +131,30 @@ CipherError CipherSetIV(CipherCtx *ctx, const uint8_t *iv) {
         return CIPHER_ERR_NULL_PTR;
     }
 
-    memcpy(ctx->iv, iv, 16ULL);
+    if (ivLen == 0) {
+        ctx->error = CIPHER_ERR_INVALID_ARG;
+        return CIPHER_ERR_INVALID_ARG;
+    }
+
+    if (!ctx->iv)
+        if ((ctx->iv = malloc(ivLen)) == NULL) {
+            ctx->error = CIPHER_ERR_MEM_ALLOC;
+            return CIPHER_ERR_MEM_ALLOC;
+        }
+
+    memcpy(ctx->iv, iv, ivLen);
     ctx->error = CIPHER_SUCCESS;
     return CIPHER_SUCCESS;
 }
 
 
-static void _bitwise_xor(uint8_t *__src, uint8_t *__dst, size_t __len) {
+static void _bitwise_xor(uint8_t *__dst, const uint8_t *__src, size_t __len) {
     for (size_t __n = 0; __n < __len; __n++)
-        __src[__n] ^= __dst[__n];
+        __dst[__n] = __dst[__n] ^ __src[__n];
 }
 
 
-static CipherError _ECB_encrypt(CipherCtx *ctx, const uint8_t *plaintext, size_t plaintextLength) {
-    if (!ctx)
-        return CIPHER_ERR_NULL_PTR;
-    
-    if (!plaintext) {
-        ctx->error = CIPHER_ERR_NULL_PTR;
-        return CIPHER_ERR_NULL_PTR;
-    }
-
-    if (plaintextLength == 0) {
-        ctx->error = CIPHER_ERR_INVALID_ARG;
-        return CIPHER_ERR_INVALID_ARG;
-    }
-    
+static CipherError _ECB_encrypt(CipherCtx *ctx, const uint8_t *plaintext, size_t plaintextLength) {    
     switch (ctx->cipher) {
         case AES:
             if (plaintextLength % AES_BLOCK_SIZE != 0) {
@@ -205,19 +203,6 @@ static CipherError _ECB_encrypt(CipherCtx *ctx, const uint8_t *plaintext, size_t
 
 
 static CipherError _ECB_decrypt(CipherCtx *ctx, const uint8_t *ciphertext, size_t ciphertextLength) {
-    if (!ctx)
-        return CIPHER_ERR_NULL_PTR;
-    
-    if (!ciphertext) {
-        ctx->error = CIPHER_ERR_NULL_PTR;
-        return CIPHER_ERR_NULL_PTR;
-    }
-
-    if (ciphertextLength == 0) {
-        ctx->error = CIPHER_ERR_INVALID_ARG;
-        return CIPHER_ERR_INVALID_ARG;
-    }
-    
     switch (ctx->cipher) {
         case AES:
             if (ciphertextLength % AES_BLOCK_SIZE != 0) {
@@ -265,6 +250,75 @@ static CipherError _ECB_decrypt(CipherCtx *ctx, const uint8_t *ciphertext, size_
 }
 
 
+static CipherError _CBC_encrypt(CipherCtx *ctx, const uint8_t *plaintext, size_t plaintextLength) {
+    if (!ctx->iv) {
+        ctx->error = CIPHER_ERR_MISSING_IV;
+        return CIPHER_ERR_MISSING_IV;
+    }
+    
+    uint8_t *block;
+
+    switch (ctx->cipher) {
+        case AES:
+            if ((block = malloc(AES_BLOCK_SIZE)) == NULL) {
+                ctx->error = CIPHER_ERR_MEM_ALLOC;
+                return CIPHER_ERR_MEM_ALLOC;
+            }
+
+            if (plaintextLength % AES_BLOCK_SIZE != 0) {
+                ctx->error = CIPHER_ERR_INVALID_PLAINTEXT_SIZE;
+                return CIPHER_ERR_INVALID_PLAINTEXT_SIZE;
+            }
+
+            if (!(ctx->out = malloc(plaintextLength))) {
+                ctx->error = CIPHER_ERR_MEM_ALLOC;
+                return CIPHER_ERR_MEM_ALLOC;
+            }
+
+            memcpy(block, ctx->iv, AES_BLOCK_SIZE);
+
+            for (size_t n = 0; n < plaintextLength; n += AES_BLOCK_SIZE) {
+                _bitwise_xor(block, (plaintext + n), AES_BLOCK_SIZE);
+                _aes_encryptor(ctx->ctx, block);
+                memcpy((ctx->out + n), ((struct aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
+                memcpy(block, ctx->out, AES_BLOCK_SIZE);
+            }
+            ctx->outLen = plaintextLength;
+            break;
+        
+        case DES:
+            if (plaintextLength % DES_BLOCK_SIZE != 0) {
+                ctx->error = CIPHER_ERR_INVALID_PLAINTEXT_SIZE;
+                return CIPHER_ERR_INVALID_PLAINTEXT_SIZE;
+            }
+
+            if (!(ctx->out = malloc(plaintextLength))) {
+                ctx->error = CIPHER_ERR_MEM_ALLOC;
+                return CIPHER_ERR_MEM_ALLOC;
+            }
+
+            memcpy(block, ctx->iv, DES_BLOCK_SIZE);
+
+            for (size_t n = 0; n < plaintextLength; n += DES_BLOCK_SIZE) {
+                _bitwise_xor(block, (plaintext + n), DES_BLOCK_SIZE);
+                _des_encryptor(ctx->ctx, block);
+                memcpy((ctx->out + n), ((struct des_cipher *)(ctx->ctx))->block, DES_BLOCK_SIZE);
+                memcpy(block, ctx->out, DES_BLOCK_SIZE);
+            }
+
+            ctx->outLen = plaintextLength;
+            break;
+
+        default:
+            ctx->error = CIPHER_ERR_UNSUPPORTED_ALGO;
+            return CIPHER_ERR_UNSUPPORTED_ALGO;
+    }
+
+    ctx->error = CIPHER_SUCCESS;
+    return CIPHER_SUCCESS;
+}
+
+
 CipherError CipherEncrypt(CipherCtx *ctx, uint8_t *plaintext, size_t plaintextLength) {
     if (!ctx)
         return CIPHER_ERR_NULL_PTR;
@@ -284,6 +338,11 @@ CipherError CipherEncrypt(CipherCtx *ctx, uint8_t *plaintext, size_t plaintextLe
     switch(ctx->mode) {
         case ECB:
             if ((state = _ECB_encrypt(ctx, plaintext, plaintextLength)) != CIPHER_SUCCESS)
+                return state;
+            break;
+        
+        case CBC:
+            if ((state = _CBC_encrypt(ctx, plaintext, plaintextLength)) != CIPHER_SUCCESS)
                 return state;
             break;
         
@@ -352,6 +411,12 @@ CipherError FreeCiphertext(CipherCtx *ctx) {
     if (ctx->ctx)
         free(ctx->ctx);
     
+    if (ctx->iv)
+        free(ctx->iv);
+    
+    if (ctx->tag)
+        free(ctx->tag);
+    
     free(ctx);
 
     ctx->error = CIPHER_SUCCESS;
@@ -388,7 +453,7 @@ CipherError GetError(CipherCtx *ctx) {
 }
 
 
-const char *GetErrorString[] = {
+const uint8_t *GetErrorString[] = {
     [CIPHER_SUCCESS] = "Success",
     [CIPHER_ERR_INVALID_ARG] = "Invalid argument",
     [CIPHER_ERR_NULL_PTR] = "Parameter with null pointer",
@@ -399,5 +464,6 @@ const char *GetErrorString[] = {
     [CIPHER_ERR_MISSING_ALGO] = "Algorithm not set",
     [CIPHER_ERR_INVALID_BLOCK_SIZE] = "Invalid block size",
     [CIPHER_ERR_INVALID_PLAINTEXT_SIZE] = "Invalid plaintext size (try with padding)",
-    [CIPHER_ERR_INVALID_CIPHERTEXT_SIZE] = "Invalid ciphertext size"
+    [CIPHER_ERR_INVALID_CIPHERTEXT_SIZE] = "Invalid ciphertext size",
+    [CIPHER_ERR_MISSING_IV] = "Required IV missing"
 };

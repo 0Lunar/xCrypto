@@ -3,6 +3,11 @@
 #include <string.h>
 #include "aes.h"
 
+#define IS_LITTLE_ENDIAN() ((*(uint8_t*)&(uint16_t){1}) == 1)
+
+extern const uint8_t _aes_sbox[];
+extern const uint8_t _aes_rsbox[];
+
 
 static const uint8_t rcon[] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1B, 0x36};
 

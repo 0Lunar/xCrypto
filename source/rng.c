@@ -13,7 +13,10 @@ void csprng_buf( void *buf, size_t len ) {
 }
 
 
-void gen_prime( mpz_t prime, int bits ) {
+void GenPrime( mpz_t prime, int bits ) {
+    if (!prime || bits == 0)
+        return;
+
     gmp_randstate_t state;
     mpz_t seed;
 
@@ -30,10 +33,10 @@ void gen_prime( mpz_t prime, int bits ) {
 
     do {
         mpz_urandomb(candidate, state, bits);
-        mpz_setbit(candidate, bits - 1);  /* forza il bit più alto: garantisce `bits` bit */
-        mpz_setbit(candidate, 0);         /* forza dispari */
+        mpz_setbit(candidate, bits - 1);
+        mpz_setbit(candidate, 0);
         mpz_nextprime(prime, candidate);
-    } while (mpz_sizeinbase(prime, 2) != (size_t)bits);  /* assicura esattamente `bits` bit */
+    } while (mpz_sizeinbase(prime, 2) != (size_t)bits);
 
     mpz_clear(candidate);
     mpz_clear(seed);

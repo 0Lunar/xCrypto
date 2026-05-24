@@ -15,19 +15,28 @@ struct rsa_ctx {
     mpz_t phi;
     mpz_t e;
     mpz_t d;
+    RsaError error;
 };
 
 
-struct rsa_ctx *rsa_init( size_t keySize, mpz_t exponent );
-void free_rsa( struct rsa_ctx *ctx );
-mpz_t *rsa_encrypt( struct rsa_ctx *ctx, mpz_t data );
-uint8_t *rsa_encrypt_buff( struct rsa_ctx *ctx, mpz_t data, size_t *buff_size );
-mpz_t *rsa_decrypt( struct rsa_ctx *ctx, mpz_t data );
-uint8_t *rsa_decrypt_buff( struct rsa_ctx *ctx, mpz_t data, size_t *buff_size );
-mpz_t *bytes_to_long(uint8_t *buff, size_t buffSize);
-uint8_t *long_to_bytes(mpz_t data);
+enum _rsa_ctx_errors {
+    RSA_SUCCESS,
+    RSA_ERR_NULL_PTR,
+    RSA_ERR_MEM_ALLOC
+};
 
 
 typedef struct rsa_ctx RsaCtx;
+typedef enum _rsa_ctx_errors RsaError;
+
+
+RsaCtx *RsaInit( size_t keySize, mpz_t exponent );
+void freeRsa( RsaCtx *ctx );
+mpz_t *RsaEncrypt( RsaCtx *ctx, mpz_t data );
+uint8_t *RsaEncryptBuff( RsaCtx *ctx, mpz_t data, size_t *buff_size );
+mpz_t *RsaDecrypt( RsaCtx *ctx, mpz_t data );
+uint8_t *RsaDecryptBuff( RsaCtx *ctx, mpz_t data, size_t *buff_size );
+mpz_t *BytesToLong(uint8_t *buff, size_t buffSize);
+uint8_t *LongToBytes(mpz_t data);
 
 #endif

@@ -2,6 +2,15 @@
 #include <stdlib.h>
 
 
+extern const uint8_t _ip_table[64];
+extern const uint8_t _fp_table[64];
+extern const uint32_t _des_c_table[16][16];
+extern const uint32_t _des_d_table[16][16];
+extern const uint64_t _des_pc2_table[14][16];
+extern const uint8_t _des_sbox[8][64];
+extern const uint8_t _des_pbox[32];
+
+
 struct des_cipher
 {
     uint64_t block;

@@ -8,10 +8,17 @@
 #include <string.h>
 
 
-uint8_t *pkcs7_pad( const uint8_t *msg, const size_t msgLen, const size_t padSize );
-uint8_t *pkcs7_unpad( const uint8_t *padded, const size_t paddedLen );
-uint8_t *x923_pad( const uint8_t *msg, const size_t msgLen, const size_t padSize );
-uint8_t *x923_unpad( const uint8_t *padded, const size_t paddedLen );
+enum _padding_types {
+    PKCS7,
+    X923
+};
+
+
+typedef enum _padding_types PadTypes;
+
+
+uint8_t *Padder(PadTypes padding, uint8_t *msg, size_t msgLen, uint8_t padSize, size_t *newMsgLen);
+uint8_t *Unpadder(PadTypes padding, uint8_t *padded, size_t paddedLen, uint8_t padSize, size_t *newMsgLen);
 
 
 #endif

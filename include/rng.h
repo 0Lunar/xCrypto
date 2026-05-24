@@ -8,7 +8,7 @@
 
 
 void csprng_buf( void *buf, size_t len );
-void gen_prime( mpz_t prime, int bits );
+void GenPrime( mpz_t prime, int bits );
 
 
 #endif

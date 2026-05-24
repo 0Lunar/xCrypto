@@ -8,17 +8,6 @@
 #include "rng.h"
 
 
-struct rsa_ctx {
-    mpz_t p;
-    mpz_t q;
-    mpz_t n;
-    mpz_t phi;
-    mpz_t e;
-    mpz_t d;
-    RsaError error;
-};
-
-
 enum _rsa_ctx_errors {
     RSA_SUCCESS,
     RSA_ERR_NULL_PTR,
@@ -30,8 +19,19 @@ typedef struct rsa_ctx RsaCtx;
 typedef enum _rsa_ctx_errors RsaError;
 
 
+struct rsa_ctx {
+    mpz_t p;
+    mpz_t q;
+    mpz_t n;
+    mpz_t phi;
+    mpz_t e;
+    mpz_t d;
+    RsaError error;
+};
+
+
 RsaCtx *RsaInit( size_t keySize, mpz_t exponent );
-void freeRsa( RsaCtx *ctx );
+RsaError freeRsa( RsaCtx *ctx );
 mpz_t *RsaEncrypt( RsaCtx *ctx, mpz_t data );
 uint8_t *RsaEncryptBuff( RsaCtx *ctx, mpz_t data, size_t *buff_size );
 mpz_t *RsaDecrypt( RsaCtx *ctx, mpz_t data );

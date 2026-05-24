@@ -4,7 +4,7 @@
 
 
 RsaCtx *RsaInit( size_t keySize, mpz_t exponent ) {
-    if (!exponent || keySize < 2 || exponent < 2) {
+    if (!exponent || keySize < 2) {
         return NULL;
     }
 

@@ -21,4 +21,9 @@ struct aes_cipher {
 typedef struct aes_cipher AesCipher;
 
 
+void _aes_encryptor( struct aes_cipher *cipher, const uint8_t *plaintext );
+void _aes_decryptor( struct aes_cipher *cipher, const uint8_t *ciphertext );
+struct aes_cipher * aes_init( const uint8_t *key, size_t keyLength );
+
+
 #endif

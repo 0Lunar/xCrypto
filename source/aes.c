@@ -267,19 +267,3 @@ struct aes_cipher * aes_init( const uint8_t *key, size_t keyLength ) {
 
     return cipher;
 }
-
-
-void free_aes( struct aes_cipher *cipher, bool dynamic ) {
-    if (!cipher)
-        return;
-
-    memset(cipher->key, 0, cipher->key_size);
-
-    if (dynamic)
-        free(cipher->key);
-
-    memset(cipher, 0, sizeof(struct aes_cipher));
-
-    if (dynamic)
-        free(cipher);
-}

@@ -222,12 +222,6 @@ struct des_cipher *des_init( const uint8_t *key ) {
 }
 
 
-void free_des( struct des_cipher *cipher ) {
-    if (cipher)
-        free(cipher);
-}
-
-
 void des_block( struct des_cipher *cipher, uint8_t *out ) {
     if (!cipher || !out)
         return;

@@ -43,16 +43,21 @@ enum _cipher_op_state {
 };
 
 
+extern const uint8_t *GetErrorString[];
+extern const uint32_t CipherBlockSize[];
+
+
 struct _generic_cipher {
     enum _ciphers cipher;
     enum _cipher_modes mode;
     enum _cipher_op_state error;
     void *ctx;
     uint8_t *iv;
+    size_t ivLen;
     uint8_t *tag;
     uint8_t *out;
     size_t outLen;
-};
+}__attribute__((aligned(16)));
 
 
 typedef enum _cipher_modes CipherModes;
@@ -73,8 +78,6 @@ uint8_t *CipherFinalize(CipherCtx *ctx);
 CipherError FreeCiphertext(CipherCtx *ctx);
 CipherError CipherReset(CipherCtx *ctx, CipherResetMode mode);
 CipherError GetError(CipherCtx *ctx);
-
-extern const uint8_t *GetErrorString[];
 
 
 #endif

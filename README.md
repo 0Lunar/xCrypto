@@ -6,7 +6,7 @@ A lightweight, high-level cryptographic library written in C. xCrypto provides a
 
 - **Algorithms:** AES, DES *(more coming soon)*
 - **Padding schemes:** PKCS7, X9.23
-- **Modes of operation:** ECB, CBC *(more coming soon)*
+- **Modes of operation:** ECB, CBC, CTR *(more coming soon)*
 - **Structured error handling** via `CipherError`
 - **CSPRNG** utility for secure key and IV generation
 - **Simple, consistent API** — configure once, encrypt/decrypt, finalize
@@ -28,7 +28,7 @@ cd xCrypto
 | `NewCipher()` | Allocates and returns a new `CipherCtx` |
 | `CipherSetAlgorithm(ctx, algo)` | Sets the cipher algorithm (`AES`, `DES`) |
 | `CipherSetKey(ctx, key, len)` | Sets the encryption key |
-| `CipherSetMode(ctx, mode)` | Sets the mode of operation (`ECB`, `CBC`) |
+| `CipherSetMode(ctx, mode)` | Sets the mode of operation (`ECB`, `CBC`, `CTR`) |
 | `CipherSetIV(ctx, iv, len)` | Sets the initialization vector |
 | `CipherReset(ctx, flags)` | Resets the context (use `CIPHER_STATE_RESET`) |
 

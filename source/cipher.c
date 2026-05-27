@@ -143,6 +143,25 @@ CipherError CipherSetIV(CipherCtx *ctx, const uint8_t *iv, size_t ivLen) {
 }
 
 
+CipherError CipherSetBuffer(CipherCtx *ctx, uint8_t *buf, size_t bufSize) {
+    if (!ctx)
+        return CIPHER_ERR_NULL_PTR;
+
+    if (!buf) {
+        ctx->error = CIPHER_ERR_NULL_PTR;
+        return CIPHER_ERR_NULL_PTR;
+    }
+
+    if (bufSize == 0) {
+        ctx->error = CIPHER_ERR_INVALID_ARG;
+        return CIPHER_ERR_INVALID_ARG;
+    }
+
+    ctx->out = buf;
+    ctx->maxOutLen = bufSize;
+}
+
+
 static void _bitwise_xor(uint8_t *__dst, const uint8_t *__src, size_t __len) {
     for (size_t __n = 0; __n < __len; __n++)
         __dst[__n] = __dst[__n] ^ __src[__n];
@@ -173,9 +192,9 @@ static CipherError _ECB_encrypt(CipherCtx *ctx, const uint8_t *plaintext, size_t
         return CIPHER_ERR_INVALID_PLAINTEXT_SIZE;
     }
 
-    if ((ctx->out = malloc(plaintextLength)) == NULL) {
-        ctx->error = CIPHER_ERR_MEM_ALLOC;
-        return CIPHER_ERR_MEM_ALLOC;
+    if (plaintextLength > ctx->maxOutLen) {
+        ctx->error = CIPHER_ERR_BUFFER_OVERFLOW;
+        return CIPHER_ERR_BUFFER_OVERFLOW;
     }
 
     memset(ctx->out, 0, plaintextLength);
@@ -215,9 +234,9 @@ static CipherError _ECB_decrypt(CipherCtx *ctx, const uint8_t *ciphertext, size_
         return CIPHER_ERR_INVALID_CIPHERTEXT_SIZE;
     }
 
-    if ((ctx->out = malloc(ciphertextLength)) == NULL) {
-        ctx->error = CIPHER_ERR_MEM_ALLOC;
-        return CIPHER_ERR_MEM_ALLOC;
+    if (ciphertextLength > ctx->maxOutLen) {
+        ctx->error = CIPHER_ERR_BUFFER_OVERFLOW;
+        return CIPHER_ERR_BUFFER_OVERFLOW;
     }
 
     memset(ctx->out, 0, ciphertextLength);
@@ -262,9 +281,9 @@ static CipherError _CBC_encrypt(CipherCtx *ctx, const uint8_t *plaintext, size_t
         return CIPHER_ERR_INVALID_CIPHERTEXT_SIZE;
     }
 
-    if ((ctx->out = malloc(plaintextLength)) == NULL) {
-        ctx->error = CIPHER_ERR_MEM_ALLOC;
-        return CIPHER_ERR_MEM_ALLOC;
+    if (plaintextLength > ctx->maxOutLen) {
+        ctx->error = CIPHER_ERR_BUFFER_OVERFLOW;
+        return CIPHER_ERR_BUFFER_OVERFLOW;
     }
 
     memset(ctx->out, 0, plaintextLength);
@@ -316,9 +335,9 @@ static CipherError _CBC_decrypt(CipherCtx *ctx, const uint8_t *ciphertext, size_
         return CIPHER_ERR_INVALID_PLAINTEXT_SIZE;
     }
     
-    if ((ctx->out = malloc(ciphertextLength)) == NULL) {
-        ctx->error = CIPHER_ERR_MEM_ALLOC;
-        return CIPHER_ERR_MEM_ALLOC;
+    if (ciphertextLength > ctx->maxOutLen) {
+        ctx->error = CIPHER_ERR_BUFFER_OVERFLOW;
+        return CIPHER_ERR_BUFFER_OVERFLOW;
     }
 
     memset(ctx->out, 0, ciphertextLength);
@@ -366,9 +385,9 @@ static CipherError _CTR_encrypt(CipherCtx *ctx, const uint8_t *plaintext, size_t
         return CIPHER_ERR_MISSING_IV;
     }
 
-    if ((ctx->out = malloc(plaintextLength)) == NULL) {
-        ctx->error = CIPHER_ERR_MEM_ALLOC;
-        return CIPHER_ERR_MEM_ALLOC;
+    if (plaintextLength > ctx->maxOutLen) {
+        ctx->error = CIPHER_ERR_BUFFER_OVERFLOW;
+        return CIPHER_ERR_BUFFER_OVERFLOW;
     }
 
     memset(ctx->out, 0, plaintextLength);
@@ -514,34 +533,22 @@ CipherError CipherDecrypt(CipherCtx *ctx, uint8_t *ciphertext, size_t ciphertext
 }
 
 
-uint8_t *CipherFinalize(CipherCtx *ctx) {
-    if (!ctx) {
-        return NULL;
-    }
+CipherError CipherFinalize(CipherCtx *ctx) {
+    if (!ctx)
+        return CIPHER_ERR_NULL_PTR;
 
-    uint8_t *tmp;
-
-    tmp = ctx->out;
     ctx->out = NULL;
-
+    ctx->outLen = 0;
     ctx->error = CIPHER_SUCCESS;
-    return tmp;
 }
 
 
-CipherError FreeCiphertext(CipherCtx *ctx) {
-    if (!ctx) {
+CipherError FreeCipher(CipherCtx *ctx) {
+    if (!ctx)
         return CIPHER_ERR_NULL_PTR;
-    }
 
     if (ctx->ctx)
         free(ctx->ctx);
-    
-    if (ctx->iv)
-        free(ctx->iv);
-    
-    if (ctx->tag)
-        free(ctx->tag);
     
     free(ctx);
 
@@ -578,9 +585,8 @@ CipherError CipherReset(CipherCtx *ctx, CipherResetMode mode) {
 
 
 CipherError GetError(CipherCtx *ctx) {
-    if (!ctx) {
+    if (!ctx)
         return CIPHER_ERR_NULL_PTR;
-    }
 
     return ctx->error;
 }
@@ -598,7 +604,8 @@ const uint8_t *GetErrorString[] = {
     [CIPHER_ERR_INVALID_BLOCK_SIZE] = "Invalid block size",
     [CIPHER_ERR_INVALID_PLAINTEXT_SIZE] = "Invalid plaintext size (try with padding)",
     [CIPHER_ERR_INVALID_CIPHERTEXT_SIZE] = "Invalid ciphertext size",
-    [CIPHER_ERR_MISSING_IV] = "Required IV missing"
+    [CIPHER_ERR_MISSING_IV] = "Required IV missing",
+    [CIPHER_ERR_BUFFER_OVERFLOW] = "The buffer size is too small"
 };
 
 

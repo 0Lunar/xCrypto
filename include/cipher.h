@@ -39,7 +39,8 @@ enum _cipher_op_state {
     CIPHER_ERR_INVALID_BLOCK_SIZE,
     CIPHER_ERR_INVALID_PLAINTEXT_SIZE,
     CIPHER_ERR_INVALID_CIPHERTEXT_SIZE,
-    CIPHER_ERR_MISSING_IV
+    CIPHER_ERR_MISSING_IV,
+    CIPHER_ERR_BUFFER_OVERFLOW
 };
 
 
@@ -53,10 +54,12 @@ struct _generic_cipher {
     enum _cipher_op_state error;
     void *ctx;
     uint8_t *iv;
-    size_t ivLen;
     uint8_t *tag;
     uint8_t *out;
+    size_t ivLen;
+    size_t tagLen;
     size_t outLen;
+    size_t maxOutLen;
 }__attribute__((aligned(16)));
 
 
@@ -72,10 +75,11 @@ CipherError CipherSetAlgorithm(CipherCtx *ctx, Ciphers cipher);
 CipherError CipherSetKey(CipherCtx *ctx, uint8_t *key, size_t keyLength);
 CipherError CipherSetMode(CipherCtx *ctx, CipherModes mode);
 CipherError CipherSetIV(CipherCtx *ctx, const uint8_t *iv, size_t ivLen);
+CipherError CipherSetBuffer(CipherCtx *ctx, uint8_t *buf, size_t bufSize);
 CipherError CipherEncrypt(CipherCtx *ctx, uint8_t *plaintext, size_t plaintextLength);
 CipherError CipherDecrypt(CipherCtx *ctx, uint8_t *ciphertext, size_t ciphertextLength);
-uint8_t *CipherFinalize(CipherCtx *ctx);
-CipherError FreeCiphertext(CipherCtx *ctx);
+CipherError CipherFinalize(CipherCtx *ctx);
+CipherError FreeCipher(CipherCtx *ctx);
 CipherError CipherReset(CipherCtx *ctx, CipherResetMode mode);
 CipherError GetError(CipherCtx *ctx);
 

@@ -2,7 +2,7 @@
 #define __xcrypto_pad_header__
 
 
-#include <stdio.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>

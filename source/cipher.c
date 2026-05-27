@@ -10,7 +10,6 @@ CipherCtx *NewCipher( void ) {
     struct _generic_cipher *new_cipher;
 
     if ((new_cipher = malloc(sizeof(struct _generic_cipher))) == NULL) {
-        perror("Cipher allocation error");
         return NULL;
     }
 
@@ -203,7 +202,7 @@ static CipherError _ECB_encrypt(CipherCtx *ctx, const uint8_t *plaintext, size_t
         case AES:            
             for (size_t n = 0; n < plaintextLength; n += AES_BLOCK_SIZE) {
                 _aes_encryptor(ctx->ctx, (plaintext + n));
-                memcpy((ctx->out + n), ((struct aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
+                memcpy((ctx->out + n), ((struct _xcrypto_aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
             }
             ctx->outLen = plaintextLength;
             break;
@@ -211,7 +210,7 @@ static CipherError _ECB_encrypt(CipherCtx *ctx, const uint8_t *plaintext, size_t
         case DES:
             for (size_t n = 0; n < plaintextLength; n += DES_BLOCK_SIZE) {
                 _des_encryptor(ctx->ctx, (plaintext + n));
-                des_block(((struct des_cipher *)(ctx->ctx)), (ctx->out + n));
+                des_block(((struct _xcrypto_des_cipher *)(ctx->ctx)), (ctx->out + n));
             }
             ctx->outLen = plaintextLength;
             break;
@@ -245,7 +244,7 @@ static CipherError _ECB_decrypt(CipherCtx *ctx, const uint8_t *ciphertext, size_
         case AES:
             for (size_t n = 0; n < ciphertextLength; n += AES_BLOCK_SIZE) {
                 _aes_decryptor(ctx->ctx, (ciphertext + n));
-                memcpy((ctx->out + n), ((struct aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
+                memcpy((ctx->out + n), ((struct _xcrypto_aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
             }
             ctx->outLen = ciphertextLength;
             break;
@@ -253,7 +252,7 @@ static CipherError _ECB_decrypt(CipherCtx *ctx, const uint8_t *ciphertext, size_
         case DES:
             for (size_t n = 0; n < ciphertextLength; n += DES_BLOCK_SIZE) {
                 _des_decryptor(ctx->ctx, (ciphertext + n));
-                des_block(((struct des_cipher *)(ctx->ctx)), (ctx->out + n));
+                des_block(((struct _xcrypto_des_cipher *)(ctx->ctx)), (ctx->out + n));
             }
             ctx->outLen = ciphertextLength;
             break;
@@ -296,7 +295,7 @@ static CipherError _CBC_encrypt(CipherCtx *ctx, const uint8_t *plaintext, size_t
             for (size_t n = 0; n < plaintextLength; n += AES_BLOCK_SIZE) {
                 _bitwise_xor(block, (plaintext + n), AES_BLOCK_SIZE);
                 _aes_encryptor(ctx->ctx, block);
-                memcpy((ctx->out + n), ((struct aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
+                memcpy((ctx->out + n), ((struct _xcrypto_aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
                 memcpy(block, (ctx->out + n), AES_BLOCK_SIZE);
             }
             ctx->outLen = plaintextLength;
@@ -305,8 +304,8 @@ static CipherError _CBC_encrypt(CipherCtx *ctx, const uint8_t *plaintext, size_t
         case DES:
             for (size_t n = 0; n < plaintextLength; n += DES_BLOCK_SIZE) {
                 _bitwise_xor(block, (plaintext + n), DES_BLOCK_SIZE);
-                _des_encryptor(((struct des_cipher *)(ctx->ctx)), block);
-                des_block(((struct des_cipher *)(ctx->ctx)), (ctx->out + n));
+                _des_encryptor(((struct _xcrypto_des_cipher *)(ctx->ctx)), block);
+                des_block(((struct _xcrypto_des_cipher *)(ctx->ctx)), (ctx->out + n));
                 memcpy(block, (ctx->out + n), DES_BLOCK_SIZE);
             }
             ctx->outLen = plaintextLength;
@@ -349,7 +348,7 @@ static CipherError _CBC_decrypt(CipherCtx *ctx, const uint8_t *ciphertext, size_
         case AES:
             for (size_t n = 0; n < ciphertextLength; n += AES_BLOCK_SIZE) {
                 _aes_decryptor(ctx->ctx, (ciphertext + n));
-                memcpy((ctx->out + n), ((struct aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
+                memcpy((ctx->out + n), ((struct _xcrypto_aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
                 _bitwise_xor((ctx->out + n), block, AES_BLOCK_SIZE);
                 memcpy(block, (ciphertext + n), AES_BLOCK_SIZE);
             }
@@ -359,7 +358,7 @@ static CipherError _CBC_decrypt(CipherCtx *ctx, const uint8_t *ciphertext, size_
         case DES:
             for (size_t n = 0; n < ciphertextLength; n += DES_BLOCK_SIZE) {
                 _des_decryptor(ctx->ctx, (ciphertext + n));
-                des_block(((struct des_cipher *)(ctx->ctx)), (ctx->out + n));
+                des_block(((struct _xcrypto_des_cipher *)(ctx->ctx)), (ctx->out + n));
                 _bitwise_xor((ctx->out + n), block, DES_BLOCK_SIZE);
                 memcpy(block, (ciphertext + n), DES_BLOCK_SIZE);
             }
@@ -406,14 +405,14 @@ static CipherError _CTR_encrypt(CipherCtx *ctx, const uint8_t *plaintext, size_t
         case AES:
             for (n = 0; n < (plaintextLength - (plaintextLength % AES_BLOCK_SIZE)); n += AES_BLOCK_SIZE) {
                 _aes_encryptor(ctx->ctx, nonce);
-                memcpy((ctx->out + n), ((struct aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
+                memcpy((ctx->out + n), ((struct _xcrypto_aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
                 _bitwise_xor((ctx->out + n), (plaintext + n), AES_BLOCK_SIZE);
                 _inc_nonce(nonce + nonceIdx, counterSize);
             }
 
             if (plaintextLength % AES_BLOCK_SIZE != 0) {
                 _aes_encryptor(ctx->ctx, nonce);
-                memcpy((ctx->out + n), ((struct aes_cipher *)(ctx->ctx))->state, (plaintextLength % AES_BLOCK_SIZE));
+                memcpy((ctx->out + n), ((struct _xcrypto_aes_cipher *)(ctx->ctx))->state, (plaintextLength % AES_BLOCK_SIZE));
                 _bitwise_xor((ctx->out + n), (plaintext + n), (plaintextLength % AES_BLOCK_SIZE));
                 _inc_nonce(nonce + nonceIdx, counterSize);
             }

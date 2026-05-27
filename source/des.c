@@ -11,7 +11,7 @@ extern const uint8_t _des_sbox[8][64];
 extern const uint8_t _des_pbox[32];
 
 
-struct des_cipher
+struct _xcrypto_des_cipher
 {
     uint64_t block;
     uint64_t key;
@@ -20,7 +20,7 @@ struct des_cipher
 
 
 
-static void permutedChoice_1( struct des_cipher *cipher, uint32_t *C0, uint32_t *D0 )
+static void permutedChoice_1( struct _xcrypto_des_cipher *cipher, uint32_t *C0, uint32_t *D0 )
 {
     uint32_t c = 0, d = 0;
     uint64_t key = cipher->key;
@@ -58,7 +58,7 @@ static uint32_t leftShift( uint32_t val, uint8_t round ) {
 }
 
 
-void keyTransformation( struct des_cipher *cipher ) {
+void keyTransformation( struct _xcrypto_des_cipher *cipher ) {
     uint32_t C, D;
 
     permutedChoice_1(cipher, &C, &D);
@@ -72,7 +72,7 @@ void keyTransformation( struct des_cipher *cipher ) {
 }
 
 
-static void initialPermutation( struct des_cipher *cipher ) {
+static void initialPermutation( struct _xcrypto_des_cipher *cipher ) {
     uint64_t out = 0;
     uint64_t block = cipher->block;
 
@@ -124,7 +124,7 @@ static uint32_t transposition( uint32_t block ) {
 }
 
 
-static void finalPermutation( struct des_cipher *cipher ) {
+static void finalPermutation( struct _xcrypto_des_cipher *cipher ) {
     uint64_t out = 0;
     uint64_t block = cipher->block;
 
@@ -137,7 +137,7 @@ static void finalPermutation( struct des_cipher *cipher ) {
 }
 
 
-void _des_encryptor( struct des_cipher *cipher, const uint8_t *plaintext ) {
+void _des_encryptor( struct _xcrypto_des_cipher *cipher, const uint8_t *plaintext ) {
     uint32_t L, R, new_R;
     uint64_t expanded_r_block;
 
@@ -168,7 +168,7 @@ void _des_encryptor( struct des_cipher *cipher, const uint8_t *plaintext ) {
 }
 
 
-void _des_decryptor( struct des_cipher *cipher, const uint8_t *ciphertext ) {
+void _des_decryptor( struct _xcrypto_des_cipher *cipher, const uint8_t *ciphertext ) {
     uint32_t L, R, new_R;
     uint64_t expanded_r_block;
  
@@ -198,13 +198,13 @@ void _des_decryptor( struct des_cipher *cipher, const uint8_t *ciphertext ) {
 }
 
 
-struct des_cipher *des_init( const uint8_t *key ) {
+struct _xcrypto_des_cipher *des_init( const uint8_t *key ) {
     if (!key)
         return NULL;
 
-    struct des_cipher *cipher;
+    struct _xcrypto_des_cipher *cipher;
 
-    if ((cipher = (struct des_cipher *)malloc(sizeof(struct des_cipher))) == NULL)
+    if ((cipher = (struct _xcrypto_des_cipher *)malloc(sizeof(struct _xcrypto_des_cipher))) == NULL)
         return NULL;
 
     cipher->key = ((uint64_t)key[0] << 56) |
@@ -222,7 +222,7 @@ struct des_cipher *des_init( const uint8_t *key ) {
 }
 
 
-void des_block( struct des_cipher *cipher, uint8_t *out ) {
+void des_block( struct _xcrypto_des_cipher *cipher, uint8_t *out ) {
     if (!cipher || !out)
         return;
 

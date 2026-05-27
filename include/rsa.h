@@ -2,7 +2,7 @@
 #define __xcrypto_rsa_header__
 
 
-#include <stdio.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <gmp.h>
 #include "rng.h"
@@ -15,11 +15,11 @@ enum _rsa_ctx_errors {
 };
 
 
-typedef struct rsa_ctx RsaCtx;
+typedef struct _xcrypto_rsa_ctx RsaCtx;
 typedef enum _rsa_ctx_errors RsaError;
 
 
-struct rsa_ctx {
+struct _xcrypto_rsa_ctx {
     mpz_t p;
     mpz_t q;
     mpz_t n;

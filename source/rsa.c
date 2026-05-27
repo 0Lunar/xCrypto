@@ -8,12 +8,12 @@ RsaCtx *RsaInit( size_t keySize, mpz_t exponent ) {
         return NULL;
     }
 
-    struct rsa_ctx *ctx;
+    struct _xcrypto_rsa_ctx *ctx;
 
-    if ((ctx = (struct rsa_ctx *)malloc(sizeof(struct rsa_ctx))) == NULL)
+    if ((ctx = (struct _xcrypto_rsa_ctx *)malloc(sizeof(struct _xcrypto_rsa_ctx))) == NULL)
         return NULL;
 
-    memset(ctx, 0, sizeof(struct rsa_ctx));
+    memset(ctx, 0, sizeof(struct _xcrypto_rsa_ctx));
 
     mpz_init(ctx->p);
     mpz_init(ctx->q);

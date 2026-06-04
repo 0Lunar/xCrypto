@@ -9,5 +9,6 @@
 #include "pad.h"
 #include "rng.h"
 #include "rsa.h"
+#include "xmd5.h"
 
 #endif

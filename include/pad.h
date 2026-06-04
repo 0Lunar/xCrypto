@@ -8,13 +8,13 @@
 #include <string.h>
 
 
-enum _padding_types {
+enum _xcrypto_padding_types {
     PKCS7,
     X923
 };
 
 
-typedef enum _padding_types PadTypes;
+typedef enum _xcrypto_padding_types PadTypes;
 
 
 uint8_t *Padder(PadTypes padding, uint8_t *msg, size_t msgLen, uint8_t padSize, size_t *newMsgLen);

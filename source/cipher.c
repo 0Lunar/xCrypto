@@ -6,21 +6,21 @@
 #define IS_LITTLE_ENDIAN() ((*(uint8_t*)&(uint16_t){1}) == 1)
 
 
-CipherCtx *NewCipher( void ) {
-    struct _generic_cipher *new_cipher;
+struct _xcrypto_generic_cipher *NewCipher( void ) {
+    struct _xcrypto_generic_cipher *new_cipher;
 
-    if ((new_cipher = malloc(sizeof(struct _generic_cipher))) == NULL) {
+    if ((new_cipher = malloc(sizeof(struct _xcrypto_generic_cipher))) == NULL) {
         return NULL;
     }
 
-    memset(new_cipher, 0, sizeof(struct _generic_cipher));
+    memset(new_cipher, 0, sizeof(struct _xcrypto_generic_cipher));
     new_cipher->error = CIPHER_SUCCESS;
 
     return new_cipher;
 }
 
 
-CipherError CipherSetAlgorithm(CipherCtx *ctx, Ciphers cipher) {
+enum _xcrypto_cipher_op_state CipherSetAlgorithm(struct _xcrypto_generic_cipher *ctx, Ciphers cipher) {
     if (!ctx)
         return CIPHER_ERR_NULL_PTR;
 
@@ -45,7 +45,7 @@ CipherError CipherSetAlgorithm(CipherCtx *ctx, Ciphers cipher) {
 }
 
 
-CipherError CipherSetKey(CipherCtx *ctx, uint8_t *key, size_t keyLength) {
+enum _xcrypto_cipher_op_state CipherSetKey(struct _xcrypto_generic_cipher *ctx, uint8_t *key, size_t keyLength) {
     if (!ctx)
         return CIPHER_ERR_NULL_PTR;
     
@@ -93,7 +93,7 @@ CipherError CipherSetKey(CipherCtx *ctx, uint8_t *key, size_t keyLength) {
 }
 
 
-CipherError CipherSetMode(CipherCtx *ctx, CipherModes mode) {
+enum _xcrypto_cipher_op_state CipherSetMode(struct _xcrypto_generic_cipher *ctx, CipherModes mode) {
     if (!ctx)
         return CIPHER_ERR_NULL_PTR;
     
@@ -115,7 +115,7 @@ CipherError CipherSetMode(CipherCtx *ctx, CipherModes mode) {
 }
 
 
-CipherError CipherSetIV(CipherCtx *ctx, const uint8_t *iv, size_t ivLen) {
+enum _xcrypto_cipher_op_state CipherSetIV(struct _xcrypto_generic_cipher *ctx, const uint8_t *iv, size_t ivLen) {
     if (!ctx || !iv)
         return CIPHER_ERR_NULL_PTR;
 
@@ -142,7 +142,7 @@ CipherError CipherSetIV(CipherCtx *ctx, const uint8_t *iv, size_t ivLen) {
 }
 
 
-CipherError CipherSetBuffer(CipherCtx *ctx, uint8_t *buf, size_t bufSize) {
+enum _xcrypto_cipher_op_state CipherSetBuffer(struct _xcrypto_generic_cipher *ctx, uint8_t *buf, size_t bufSize) {
     if (!ctx)
         return CIPHER_ERR_NULL_PTR;
 
@@ -185,7 +185,7 @@ static void _inc_nonce(uint8_t *buf, size_t nonceSize) {
 }
 
 
-static CipherError _ECB_encrypt(CipherCtx *ctx, const uint8_t *plaintext, size_t plaintextLength) {    
+static enum _xcrypto_cipher_op_state _ECB_encrypt(struct _xcrypto_generic_cipher *ctx, const uint8_t *plaintext, size_t plaintextLength) {    
     if (plaintextLength % CipherBlockSize[ctx->cipher] != 0) {
         ctx->error = CIPHER_ERR_INVALID_PLAINTEXT_SIZE;
         return CIPHER_ERR_INVALID_PLAINTEXT_SIZE;
@@ -225,7 +225,7 @@ static CipherError _ECB_encrypt(CipherCtx *ctx, const uint8_t *plaintext, size_t
 }
 
 
-static CipherError _ECB_decrypt(CipherCtx *ctx, const uint8_t *ciphertext, size_t ciphertextLength) {
+static enum _xcrypto_cipher_op_state _ECB_decrypt(struct _xcrypto_generic_cipher *ctx, const uint8_t *ciphertext, size_t ciphertextLength) {
     Ciphers cipher = ctx->cipher;
 
     if (ciphertextLength % CipherBlockSize[cipher] != 0) {
@@ -267,7 +267,7 @@ static CipherError _ECB_decrypt(CipherCtx *ctx, const uint8_t *ciphertext, size_
 }
 
 
-static CipherError _CBC_encrypt(CipherCtx *ctx, const uint8_t *plaintext, size_t plaintextLength) {
+static enum _xcrypto_cipher_op_state _CBC_encrypt(struct _xcrypto_generic_cipher *ctx, const uint8_t *plaintext, size_t plaintextLength) {
     Ciphers cipher = ctx->cipher;
     
     if (!ctx->iv) {
@@ -321,7 +321,7 @@ static CipherError _CBC_encrypt(CipherCtx *ctx, const uint8_t *plaintext, size_t
 }
 
 
-static CipherError _CBC_decrypt(CipherCtx *ctx, const uint8_t *ciphertext, size_t ciphertextLength) {
+static enum _xcrypto_cipher_op_state _CBC_decrypt(struct _xcrypto_generic_cipher *ctx, const uint8_t *ciphertext, size_t ciphertextLength) {
     Ciphers cipher = ctx->cipher;
     
     if (!ctx->iv) {
@@ -376,7 +376,7 @@ static CipherError _CBC_decrypt(CipherCtx *ctx, const uint8_t *ciphertext, size_
 }
 
 
-static CipherError _CTR_encrypt(CipherCtx *ctx, const uint8_t *plaintext, size_t plaintextLength) {
+static enum _xcrypto_cipher_op_state _CTR_encrypt(struct _xcrypto_generic_cipher *ctx, const uint8_t *plaintext, size_t plaintextLength) {
     Ciphers cipher = ctx->cipher;
 
     if (!ctx->iv) {
@@ -448,7 +448,7 @@ static CipherError _CTR_encrypt(CipherCtx *ctx, const uint8_t *plaintext, size_t
 }
 
 
-CipherError CipherEncrypt(CipherCtx *ctx, uint8_t *plaintext, size_t plaintextLength) {
+enum _xcrypto_cipher_op_state CipherEncrypt(struct _xcrypto_generic_cipher *ctx, uint8_t *plaintext, size_t plaintextLength) {
     if (!ctx)
         return CIPHER_ERR_NULL_PTR;
     
@@ -462,7 +462,7 @@ CipherError CipherEncrypt(CipherCtx *ctx, uint8_t *plaintext, size_t plaintextLe
         return CIPHER_ERR_INVALID_ARG;
     }
     
-    CipherError state;
+    enum _xcrypto_cipher_op_state state;
     
     switch(ctx->mode) {
         case ECB:
@@ -490,7 +490,7 @@ CipherError CipherEncrypt(CipherCtx *ctx, uint8_t *plaintext, size_t plaintextLe
 }
 
 
-CipherError CipherDecrypt(CipherCtx *ctx, uint8_t *ciphertext, size_t ciphertextLength) {
+enum _xcrypto_cipher_op_state CipherDecrypt(struct _xcrypto_generic_cipher *ctx, uint8_t *ciphertext, size_t ciphertextLength) {
     if (!ctx)
         return CIPHER_ERR_NULL_PTR;
     
@@ -504,7 +504,7 @@ CipherError CipherDecrypt(CipherCtx *ctx, uint8_t *ciphertext, size_t ciphertext
         return CIPHER_ERR_INVALID_ARG;
     }
     
-    CipherError state;
+    enum _xcrypto_cipher_op_state state;
 
     switch(ctx->mode) {
         case ECB:
@@ -532,7 +532,7 @@ CipherError CipherDecrypt(CipherCtx *ctx, uint8_t *ciphertext, size_t ciphertext
 }
 
 
-CipherError CipherFinalize(CipherCtx *ctx) {
+enum _xcrypto_cipher_op_state CipherFinalize(struct _xcrypto_generic_cipher *ctx) {
     if (!ctx)
         return CIPHER_ERR_NULL_PTR;
 
@@ -542,7 +542,7 @@ CipherError CipherFinalize(CipherCtx *ctx) {
 }
 
 
-CipherError FreeCipher(CipherCtx *ctx) {
+enum _xcrypto_cipher_op_state FreeCipher(struct _xcrypto_generic_cipher *ctx) {
     if (!ctx)
         return CIPHER_ERR_NULL_PTR;
 
@@ -556,7 +556,7 @@ CipherError FreeCipher(CipherCtx *ctx) {
 }
 
 
-CipherError CipherReset(CipherCtx *ctx, CipherResetMode mode) {
+enum _xcrypto_cipher_op_state CipherReset(struct _xcrypto_generic_cipher *ctx, CipherResetMode mode) {
     if (!ctx)
         return CIPHER_ERR_NULL_PTR;
 
@@ -583,7 +583,7 @@ CipherError CipherReset(CipherCtx *ctx, CipherResetMode mode) {
 }
 
 
-CipherError GetError(CipherCtx *ctx) {
+enum _xcrypto_cipher_op_state CipherGetError(struct _xcrypto_generic_cipher *ctx) {
     if (!ctx)
         return CIPHER_ERR_NULL_PTR;
 
@@ -591,7 +591,7 @@ CipherError GetError(CipherCtx *ctx) {
 }
 
 
-const uint8_t *GetErrorString[] = {
+const uint8_t *CipherGetErrorString[] = {
     [CIPHER_SUCCESS] = "Success",
     [CIPHER_ERR_INVALID_ARG] = "Invalid argument",
     [CIPHER_ERR_NULL_PTR] = "Parameter with null pointer",

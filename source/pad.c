@@ -100,7 +100,7 @@ static uint8_t *__x923_unpad( const uint8_t *padded, const size_t paddedLen, con
 }
 
 
-uint8_t *Padder(PadTypes padding, uint8_t *msg, size_t msgLen, uint8_t padSize, size_t *newMsgLen) {
+uint8_t *Padder(enum _xcrypto_padding_types padding, uint8_t *msg, size_t msgLen, uint8_t padSize, size_t *newMsgLen) {
     switch (padding) {
         case PKCS7:
             return __pkcs7_pad(msg, msgLen, padSize, newMsgLen);
@@ -115,7 +115,7 @@ uint8_t *Padder(PadTypes padding, uint8_t *msg, size_t msgLen, uint8_t padSize, 
 }
 
 
-uint8_t *Unpadder(PadTypes padding, uint8_t *padded, size_t paddedLen, uint8_t padSize, size_t *newMsgLen) {
+uint8_t *Unpadder(enum _xcrypto_padding_types padding, uint8_t *padded, size_t paddedLen, uint8_t padSize, size_t *newMsgLen) {
     switch (padding)
     {
     case PKCS7:

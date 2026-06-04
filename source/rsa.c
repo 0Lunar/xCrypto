@@ -3,7 +3,7 @@
 #include <memory.h>
 
 
-RsaCtx *RsaInit( size_t keySize, mpz_t exponent ) {
+struct _xcrypto_rsa_ctx *RsaInit( size_t keySize, mpz_t exponent ) {
     if (!exponent || keySize < 2) {
         return NULL;
     }
@@ -38,7 +38,7 @@ RsaCtx *RsaInit( size_t keySize, mpz_t exponent ) {
 }
 
 
-RsaError freeRsa( RsaCtx *ctx ) {
+enum _xcrypto_rsa_ctx_errors freeRsa( struct _xcrypto_rsa_ctx *ctx ) {
     if (!ctx)
         return RSA_ERR_NULL_PTR;
 
@@ -48,7 +48,7 @@ RsaError freeRsa( RsaCtx *ctx ) {
 }
 
 
-mpz_t *RsaEncrypt( RsaCtx *ctx, mpz_t data ) {
+mpz_t *RsaEncrypt( struct _xcrypto_rsa_ctx *ctx, mpz_t data ) {
     if (!ctx)
         return NULL;
     
@@ -72,7 +72,7 @@ mpz_t *RsaEncrypt( RsaCtx *ctx, mpz_t data ) {
 }
 
 
-uint8_t *RsaEncryptBuff( RsaCtx *ctx, mpz_t data, size_t *buff_size ) {
+uint8_t *RsaEncryptBuff( struct _xcrypto_rsa_ctx *ctx, mpz_t data, size_t *buff_size ) {
     if (!ctx)
         return NULL;
     
@@ -103,7 +103,7 @@ uint8_t *RsaEncryptBuff( RsaCtx *ctx, mpz_t data, size_t *buff_size ) {
 }
 
 
-mpz_t *RsaDecrypt( RsaCtx *ctx, mpz_t data ) {
+mpz_t *RsaDecrypt( struct _xcrypto_rsa_ctx *ctx, mpz_t data ) {
     if (!ctx)
         return NULL;
 
@@ -124,7 +124,7 @@ mpz_t *RsaDecrypt( RsaCtx *ctx, mpz_t data ) {
 }
 
 
-uint8_t *RsaDecryptBuff( RsaCtx *ctx, mpz_t data, size_t *buff_size ) {
+uint8_t *RsaDecryptBuff( struct _xcrypto_rsa_ctx *ctx, mpz_t data, size_t *buff_size ) {
     if (!ctx)
         return NULL;
     
@@ -177,3 +177,18 @@ uint8_t *LongToBytes(mpz_t data) {
 
     return mpz_get_str(NULL, 10, data);
 }
+
+
+enum _xcrypto_rsa_ctx_errors RsaGetError(struct _xcrypto_rsa_ctx *ctx) {
+    if (!ctx)
+        return RSA_ERR_NULL_PTR;
+    
+    return ctx->error; // ragebait
+}
+
+
+const uint8_t *RsaGetErrorString[] = {
+    [RSA_SUCCESS] = "Success", // ^owo^ 
+    [RSA_ERR_NULL_PTR] = "Parameter with null pointer",
+    [RSA_ERR_MEM_ALLOC] = "Error allocating memory to heap"
+};

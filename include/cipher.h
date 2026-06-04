@@ -6,7 +6,7 @@
 #include <stdint.h>
 
 
-enum _cipher_modes {
+enum _xcrypto_cipher_modes {
     CIPHER_MODE_NOT_SET,
     ECB,
     CBC,
@@ -14,20 +14,20 @@ enum _cipher_modes {
     OFB
 };
 
-enum _ciphers {
+enum _xcrypto_ciphers {
     CIPHER_NOT_SET,
     AES,
     DES
 };
 
 
-enum _cipher_reset_mode {
+enum _xcrypto_cipher_reset_mode {
     CIPHER_FULL_RESET,
     CIPHER_STATE_RESET
 };
 
 
-enum _cipher_op_state {
+enum _xcrypto_cipher_op_state {
     CIPHER_SUCCESS,
     CIPHER_ERR_INVALID_ARG,
     CIPHER_ERR_NULL_PTR,
@@ -48,10 +48,10 @@ extern const uint8_t *GetErrorString[];
 extern const uint32_t CipherBlockSize[];
 
 
-struct _generic_cipher {
-    enum _ciphers cipher;
-    enum _cipher_modes mode;
-    enum _cipher_op_state error;
+struct _xcrypto_generic_cipher {
+    enum _xcrypto_ciphers cipher;
+    enum _xcrypto_cipher_modes mode;
+    enum _xcrypto_cipher_op_state error;
     void *ctx;
     uint8_t *iv;
     uint8_t *tag;
@@ -63,11 +63,11 @@ struct _generic_cipher {
 }__attribute__((aligned(16)));
 
 
-typedef enum _cipher_modes CipherModes;
-typedef enum _ciphers Ciphers;
-typedef enum _cipher_reset_mode CipherResetMode;
-typedef enum _cipher_op_state CipherError;
-typedef struct _generic_cipher CipherCtx;
+typedef enum _xcrypto_cipher_modes CipherModes;
+typedef enum _xcrypto_ciphers Ciphers;
+typedef enum _xcrypto_cipher_reset_mode CipherResetMode;
+typedef enum _xcrypto_cipher_op_state CipherError;
+typedef struct _xcrypto_generic_cipher CipherCtx;
 
 
 CipherCtx *NewCipher( void );
@@ -81,7 +81,9 @@ CipherError CipherDecrypt(CipherCtx *ctx, uint8_t *ciphertext, size_t ciphertext
 CipherError CipherFinalize(CipherCtx *ctx);
 CipherError FreeCipher(CipherCtx *ctx);
 CipherError CipherReset(CipherCtx *ctx, CipherResetMode mode);
-CipherError GetError(CipherCtx *ctx);
+CipherError CipherGetError(CipherCtx *ctx);
+
+extern const uint8_t *CipherGetErrorString[];
 
 
 #endif

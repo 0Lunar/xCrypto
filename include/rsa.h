@@ -8,7 +8,7 @@
 #include "rng.h"
 
 
-enum _rsa_ctx_errors {
+enum _xcrypto_rsa_ctx_errors {
     RSA_SUCCESS,
     RSA_ERR_NULL_PTR,
     RSA_ERR_MEM_ALLOC
@@ -16,7 +16,7 @@ enum _rsa_ctx_errors {
 
 
 typedef struct _xcrypto_rsa_ctx RsaCtx;
-typedef enum _rsa_ctx_errors RsaError;
+typedef enum _xcrypto_rsa_ctx_errors RsaError;
 
 
 struct _xcrypto_rsa_ctx {
@@ -38,5 +38,8 @@ mpz_t *RsaDecrypt( RsaCtx *ctx, mpz_t data );
 uint8_t *RsaDecryptBuff( RsaCtx *ctx, mpz_t data, size_t *buff_size );
 mpz_t *BytesToLong(uint8_t *buff, size_t buffSize);
 uint8_t *LongToBytes(mpz_t data);
+RsaError RsaGetError(struct _xcrypto_rsa_ctx *ctx);
+
+extern const uint8_t *RsaGetErrorString[];
 
 #endif

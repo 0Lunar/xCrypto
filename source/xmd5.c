@@ -52,7 +52,7 @@ static void _md5_digest(struct _xcrypto_md5_ctx *ctx) {
     C = ctx->C;
     D = ctx->D;
     
-    for (int i = 0; i < 16; i++) {
+    for (uint8_t i = 0; i < 16; i++) {
         M[i] =
             ((uint32_t)ctx->buf[i * 4 + 0]      ) |
             ((uint32_t)ctx->buf[i * 4 + 1] <<  8) |
@@ -113,16 +113,16 @@ struct _xcrypto_md5_ctx *XMD5_Init() {
 }
 
 
-enum _xcrypto_md5_errors XMD5_Update(struct _xcrypto_md5_ctx *ctx, const uint8_t *plaintext, size_t plaintextLength) {
+enum _xcrypto_md5_errors XMD5_Update(struct _xcrypto_md5_ctx *ctx, const uint8_t *buf, size_t bufSize) {
     if (!ctx)
         return MD5_ERR_NULL_PTR;
     
-    if (!plaintext) {
+    if (!buf) {
         ctx->error = MD5_ERR_NULL_PTR;
         return MD5_ERR_NULL_PTR;
     }
 
-    if (plaintextLength == 0) {
+    if (bufSize == 0) {
         ctx->error = MD5_SUCCESS;
         return MD5_SUCCESS;
     }
@@ -130,22 +130,22 @@ enum _xcrypto_md5_errors XMD5_Update(struct _xcrypto_md5_ctx *ctx, const uint8_t
     size_t buf_len;
     size_t cnt;
 
-    buf_len = ctx->buf_len + plaintextLength;
+    buf_len = ctx->buf_len + bufSize;
 
     if (buf_len < 64) {
-        memcpy(ctx->buf + ctx->buf_len, plaintext, plaintextLength);
-        ctx->buf_len += plaintextLength;
-        ctx->bits += ((uint64_t)plaintextLength << 3);
+        memcpy(ctx->buf + ctx->buf_len, buf, bufSize);
+        ctx->buf_len += bufSize;
+        ctx->bits += ((uint64_t)bufSize << 3);
     }
     else {
         cnt = 64 - ctx->buf_len;
-        memcpy(ctx->buf + ctx->buf_len, plaintext, cnt);
+        memcpy(ctx->buf + ctx->buf_len, buf, cnt);
         _md5_digest(ctx);
         buf_len -= 64;
         ctx->bits += ((uint64_t)cnt << 3);
 
         while (buf_len >= 64) {
-            memcpy(ctx->buf, plaintext + cnt, 64);
+            memcpy(ctx->buf, buf + cnt, 64);
             _md5_digest(ctx);
             buf_len -= 64;
             cnt += 64;
@@ -153,7 +153,7 @@ enum _xcrypto_md5_errors XMD5_Update(struct _xcrypto_md5_ctx *ctx, const uint8_t
         }
 
         if (buf_len > 0) {
-            memcpy(ctx->buf, plaintext + cnt, buf_len);
+            memcpy(ctx->buf, buf + cnt, buf_len);
             ctx->bits += ((uint64_t)buf_len << 3);
             ctx->buf_len = buf_len;
         }
@@ -188,7 +188,7 @@ enum _xcrypto_md5_errors XMD5_Finalize(struct _xcrypto_md5_ctx *ctx, uint8_t *bu
     while (ctx->buf_len < 56)
         ctx->buf[ctx->buf_len++] = 0;
 
-    for (int i = 0; i < 8; i++)
+    for (uint8_t i = 0; i < 8; i++)
         ctx->buf[56 + i] = (uint8_t)(bits >> (8 * i));
 
     _md5_digest(ctx);

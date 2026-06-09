@@ -25,7 +25,8 @@ enum _xcrypto_hash_op_state {
     HASH_ERR_MEM_ALLOC,
     HASH_ERR_MISSING_ALGO,
     HASH_ERR_MISSING_BUF,
-    HASH_ERR_BUFFER_OVERFLOW
+    HASH_ERR_BUFFER_OVERFLOW,
+    HASH_ERR_ONESHOT
 };
 
 
@@ -53,6 +54,7 @@ HashError HashSetAlgorithm(HashCtx *ctx, HashAlgorithm algorithm);
 HashError HashUpdate(HashCtx *ctx, const uint8_t *buf, size_t bufSize);
 HashError HashFinalize(HashCtx *ctx, uint8_t *buf, size_t bufSize);
 HashError HashReset(HashCtx *ctx, HashResetMode mode);
+HashError HashOneshot(HashAlgorithm algorithm, const uint8_t *plaintext, size_t plaintextSize, uint8_t *digest, size_t digestSize);
 
 
 extern const uint8_t *HashGetErrorString[];

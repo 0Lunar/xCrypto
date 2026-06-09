@@ -144,6 +144,66 @@ enum _xcrypto_hash_op_state HashReset(struct _xcrypto_hash_ctx *ctx, enum _xcryp
 }
 
 
+enum _xcrypto_hash_op_state HashOneshot(enum _xcrypto_hash_algo algorithm, const uint8_t *plaintext, size_t plaintextSize, uint8_t *digest, size_t digestSize) {
+    if (!plaintext || !digest)
+        return HASH_ERR_NULL_PTR;
+    
+    if (plaintextSize == 0)
+        return HASH_SUCCESS;
+    
+    void *ctx;
+    void *(* finalize)(void *, uint8_t *);
+
+    switch (algorithm) {
+        case XCRYPTO_MD5:
+            if ((ctx = XMD5_Init()) == NULL)
+                return HASH_ERR_MEM_ALLOC;
+            
+            if (XMD5_Update(ctx, plaintext, plaintextSize) != MD5_SUCCESS)
+                return HASH_ERR_ONESHOT;
+            
+            finalize = (void *)XMD5_Finalize;
+            break;
+
+        case XCRYPTO_SHA0:
+            if ((ctx = XSHA0_Init()) == NULL)
+                return HASH_ERR_MEM_ALLOC;
+            
+            if (XSHA0_Update(ctx, plaintext, plaintextSize) != SHA0_SUCCESS)
+                return HASH_ERR_ONESHOT;
+            
+            finalize = (void *)XSHA0_Finalize;
+            break;
+        
+        case XCRYPTO_SHA1:
+            if ((ctx = XSHA1_Init()) == NULL)
+                return HASH_ERR_MEM_ALLOC;
+            
+            if (XSHA1_Update(ctx, plaintext, plaintextSize) != SHA1_SUCCESS)
+                return HASH_ERR_ONESHOT;
+            
+            finalize = (void *)XSHA1_Finalize;
+            break;
+        
+        default:
+            return HASH_ERR_UNSUPPORTED_ALGO;
+    }
+
+    if (digestSize < HashDigestSize[algorithm]) {
+        free(ctx);
+        return HASH_ERR_BUFFER_OVERFLOW;
+    }
+
+    if (finalize(ctx, digest) != NULL) {
+        free(ctx);
+        return HASH_ERR_ONESHOT;
+    }
+    
+    free(ctx);
+    return HASH_SUCCESS;
+}
+
+
 const uint8_t *HashGetErrorString[] = {
     [HASH_SUCCESS] = "Success",
     [HASH_ERR_INVALID_ARG] = "Invalid argument",
@@ -152,7 +212,8 @@ const uint8_t *HashGetErrorString[] = {
     [HASH_ERR_MEM_ALLOC] = "Error allocating memory to heap",
     [HASH_ERR_MISSING_ALGO] = "Algorithm not set ( try HashSetAlgorithm )",
     [HASH_ERR_MISSING_BUF] = "Missing buffer for hashing ( try HashSetBuffer )",
-    [HASH_ERR_BUFFER_OVERFLOW] = "The buffer size is too small"
+    [HASH_ERR_BUFFER_OVERFLOW] = "The buffer size is too small",
+    [HASH_ERR_ONESHOT] = "Generic error on hash oneshot"
 };
 
 

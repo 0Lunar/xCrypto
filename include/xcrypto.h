@@ -10,6 +10,7 @@
 #include "rng.h"
 #include "rsa.h"
 #include "xmd5.h"
+#include "xsha0.h"
 #include "xsha1.h"
 
 #endif

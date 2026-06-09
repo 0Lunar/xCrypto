@@ -3,7 +3,7 @@
 #include <memory.h>
 
 
-struct _xcrypto_rsa_ctx *RsaInit( size_t keySize, mpz_t exponent ) {
+struct _xcrypto_rsa_ctx *NewRsa( size_t keySize, mpz_t exponent ) {
     if (!exponent || keySize < 2) {
         return NULL;
     }
@@ -21,6 +21,7 @@ struct _xcrypto_rsa_ctx *RsaInit( size_t keySize, mpz_t exponent ) {
     mpz_init(ctx->phi);
     mpz_init(ctx->e);
     mpz_init(ctx->d);
+    mpz_init(ctx->data);
 
     mpz_set(ctx->e, exponent);
     GenPrime(ctx->p, keySize / 2);
@@ -38,144 +39,66 @@ struct _xcrypto_rsa_ctx *RsaInit( size_t keySize, mpz_t exponent ) {
 }
 
 
-enum _xcrypto_rsa_ctx_errors freeRsa( struct _xcrypto_rsa_ctx *ctx ) {
+enum _xcrypto_rsa_ctx_errors FreeRsa( struct _xcrypto_rsa_ctx *ctx ) {
     if (!ctx)
         return RSA_ERR_NULL_PTR;
 
-    mpz_clears(ctx->p, ctx->q, ctx->n, ctx->phi, ctx->e, ctx->d);
+    mpz_clears(ctx->p, ctx->q, ctx->n, ctx->phi, ctx->e, ctx->d, ctx->data, NULL);
     free(ctx);
-    ctx->error = RSA_SUCCESS;
+
+    return RSA_SUCCESS;
 }
 
 
-mpz_t *RsaEncrypt( struct _xcrypto_rsa_ctx *ctx, mpz_t data ) {
+enum _xcrypto_rsa_ctx_errors RsaEncrypt( struct _xcrypto_rsa_ctx *ctx, const mpz_t plaintext, mpz_t ciphertext ) {
     if (!ctx)
-        return NULL;
+        return RSA_ERR_NULL_PTR;
     
-    if (!data) {
-        ctx->error = RSA_ERR_NULL_PTR;
-        return NULL;
-    }
-
-    mpz_t *encrypted;
-
-    if ((encrypted = (mpz_t *)malloc(sizeof(mpz_t))) == NULL) {
-        ctx->error = RSA_ERR_MEM_ALLOC;
-        return NULL;
-    }
-    
-    mpz_init(*encrypted);
-    mpz_powm(*encrypted, data, ctx->e, ctx->n);
+    mpz_powm(ciphertext, plaintext, ctx->e, ctx->n);
 
     ctx->error = RSA_SUCCESS;
-    return encrypted;
+    return RSA_SUCCESS;
 }
 
 
-uint8_t *RsaEncryptBuff( struct _xcrypto_rsa_ctx *ctx, mpz_t data, size_t *buff_size ) {
+enum _xcrypto_rsa_ctx_errors RsaDecrypt( struct _xcrypto_rsa_ctx *ctx, const mpz_t ciphertext, mpz_t plaintext ) {
     if (!ctx)
-        return NULL;
-    
-    if (!data) {
-        ctx->error = RSA_ERR_NULL_PTR;
-        return NULL;
-    }
+        return RSA_ERR_NULL_PTR;
 
-    mpz_t encrypted;
-    uint8_t *buff;
+    mpz_powm(plaintext, ciphertext, ctx->d, ctx->n);
 
-    mpz_init(encrypted);
-    mpz_powm(encrypted, data, ctx->e, ctx->n);
+    ctx->error = RSA_SUCCESS;
+    return RSA_SUCCESS;
+}
 
-    buff = mpz_export(
-        NULL,
-        buff_size,
+
+enum _xcrypto_rsa_ctx_errors BytesToLong(uint8_t *buf, size_t bufSize, mpz_t converted) {
+    if (!buf)
+        return RSA_ERR_NULL_PTR;
+
+    if (bufSize == 0)
+        return RSA_ERR_INVALID_ARG;
+
+    mpz_import(converted, bufSize, 1, 1, 1, 0, buf);
+    return RSA_ERR_INVALID_ARG;
+}
+
+
+enum _xcrypto_rsa_ctx_errors LongToBytes( mpz_t data, uint8_t *buf, size_t *bufLen ) {
+    if (!buf || !bufLen)
+        return RSA_ERR_NULL_PTR;
+
+    mpz_export(
+        buf,
+        bufLen,
         1,
         1,
         1,
         0,
-        encrypted
+        data
     );
 
-    mpz_clear(encrypted);
-    ctx->error = RSA_SUCCESS;
-    return buff;
-}
-
-
-mpz_t *RsaDecrypt( struct _xcrypto_rsa_ctx *ctx, mpz_t data ) {
-    if (!ctx)
-        return NULL;
-
-    if (!data) {
-        ctx->error = RSA_ERR_NULL_PTR;
-        return NULL;
-    }
-
-    mpz_t *decrypted;
-
-    decrypted = (mpz_t *)malloc(sizeof(mpz_t));
-    mpz_init(*decrypted);
-
-    mpz_powm(*decrypted, data, ctx->d, ctx->n);
-
-    ctx->error = RSA_SUCCESS;
-    return decrypted;
-}
-
-
-uint8_t *RsaDecryptBuff( struct _xcrypto_rsa_ctx *ctx, mpz_t data, size_t *buff_size ) {
-    if (!ctx)
-        return NULL;
-    
-    if (!data) {
-        ctx->error = RSA_ERR_NULL_PTR;
-        return NULL;
-    }
-
-    mpz_t decrypted;
-    uint8_t *buff;
-
-    mpz_init(decrypted);
-    mpz_powm(decrypted, data, ctx->d, ctx->n);
-
-    buff = mpz_export(
-        NULL,
-        buff_size,
-        1,
-        1,
-        1,
-        0,
-        decrypted
-    );
-
-    mpz_clear(decrypted);
-    ctx->error = RSA_SUCCESS;
-    return buff;
-}
-
-
-mpz_t *BytesToLong(uint8_t *buff, size_t buffSize) {
-    if (!buff || buffSize == 0)
-        return NULL;
-
-    mpz_t *res;
-
-    if ((res = malloc(sizeof(mpz_t))) == NULL)
-        return NULL;
-
-    mpz_init(*res);
-    mpz_import(*res, buffSize, 1, 1, 1, 0, buff);
-
-    return res;
-}
-
-
-uint8_t *LongToBytes(mpz_t data) {
-    if (!data)
-        return NULL;
-
-    return mpz_get_str(NULL, 10, data);
+    return RSA_SUCCESS;
 }
 
 
@@ -183,12 +106,13 @@ enum _xcrypto_rsa_ctx_errors RsaGetError(struct _xcrypto_rsa_ctx *ctx) {
     if (!ctx)
         return RSA_ERR_NULL_PTR;
     
-    return ctx->error; // ragebait
+    return ctx->error;
 }
 
 
 const uint8_t *RsaGetErrorString[] = {
-    [RSA_SUCCESS] = "Success", // ^owo^ 
+    [RSA_SUCCESS] = "Success",
     [RSA_ERR_NULL_PTR] = "Parameter with null pointer",
-    [RSA_ERR_MEM_ALLOC] = "Error allocating memory to heap"
+    [RSA_ERR_MEM_ALLOC] = "Error allocating memory to heap",
+    [RSA_ERR_INVALID_ARG] = "Invalid argument"
 };

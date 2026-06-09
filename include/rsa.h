@@ -11,7 +11,8 @@
 enum _xcrypto_rsa_ctx_errors {
     RSA_SUCCESS,
     RSA_ERR_NULL_PTR,
-    RSA_ERR_MEM_ALLOC
+    RSA_ERR_MEM_ALLOC,
+    RSA_ERR_INVALID_ARG
 };
 
 
@@ -26,18 +27,17 @@ struct _xcrypto_rsa_ctx {
     mpz_t phi;
     mpz_t e;
     mpz_t d;
+    mpz_t data;
     RsaError error;
 };
 
 
-RsaCtx *RsaInit( size_t keySize, mpz_t exponent );
-RsaError freeRsa( RsaCtx *ctx );
-mpz_t *RsaEncrypt( RsaCtx *ctx, mpz_t data );
-uint8_t *RsaEncryptBuff( RsaCtx *ctx, mpz_t data, size_t *buff_size );
-mpz_t *RsaDecrypt( RsaCtx *ctx, mpz_t data );
-uint8_t *RsaDecryptBuff( RsaCtx *ctx, mpz_t data, size_t *buff_size );
-mpz_t *BytesToLong(uint8_t *buff, size_t buffSize);
-uint8_t *LongToBytes(mpz_t data);
+RsaCtx *NewRsa( size_t keySize, mpz_t exponent );
+RsaError FreeRsa( RsaCtx *ctx );
+RsaError RsaEncrypt( RsaCtx *ctx, const mpz_t plaintext, mpz_t ciphertext );
+RsaError RsaDecrypt( RsaCtx *ctx, const mpz_t ciphertext, mpz_t plaintext );
+RsaError BytesToLong(uint8_t *buf, size_t bufSize, mpz_t converted);
+RsaError LongToBytes(mpz_t data, uint8_t *buf, size_t *bufLen);
 RsaError RsaGetError(struct _xcrypto_rsa_ctx *ctx);
 
 extern const uint8_t *RsaGetErrorString[];

@@ -461,6 +461,11 @@ enum _xcrypto_cipher_op_state CipherEncrypt(struct _xcrypto_generic_cipher *ctx,
         ctx->error = CIPHER_ERR_INVALID_ARG;
         return CIPHER_ERR_INVALID_ARG;
     }
+
+    if (!ctx->out) {
+        ctx->error = CIPHER_ERR_MISSING_BUF;
+        return CIPHER_ERR_MISSING_BUF;
+    }
     
     enum _xcrypto_cipher_op_state state;
     
@@ -502,6 +507,11 @@ enum _xcrypto_cipher_op_state CipherDecrypt(struct _xcrypto_generic_cipher *ctx,
     if (ciphertext == 0) {
         ctx->error = CIPHER_ERR_INVALID_ARG;
         return CIPHER_ERR_INVALID_ARG;
+    }
+
+    if (!ctx->out) {
+        ctx->error = CIPHER_ERR_MISSING_BUF;
+        return CIPHER_ERR_MISSING_BUF;
     }
     
     enum _xcrypto_cipher_op_state state;
@@ -599,11 +609,12 @@ const uint8_t *CipherGetErrorString[] = {
     [CIPHER_ERR_INVALID_KEY] = "Invalid key or incompatible key length",
     [CIPHER_ERR_UNSUPPORTED_MODE] = "Invalid or non-existent mode",
     [CIPHER_ERR_MEM_ALLOC] = "Error allocating memory to heap",
-    [CIPHER_ERR_MISSING_ALGO] = "Algorithm not set",
+    [CIPHER_ERR_MISSING_ALGO] = "Algorithm not set ( use CipherSetAlgorithm )",
+    [CIPHER_ERR_MISSING_BUF] = "Missing buffer for encryption or decryption ( use CipherSetBuffer )",
     [CIPHER_ERR_INVALID_BLOCK_SIZE] = "Invalid block size",
     [CIPHER_ERR_INVALID_PLAINTEXT_SIZE] = "Invalid plaintext size (try with padding)",
     [CIPHER_ERR_INVALID_CIPHERTEXT_SIZE] = "Invalid ciphertext size",
-    [CIPHER_ERR_MISSING_IV] = "Required IV missing",
+    [CIPHER_ERR_MISSING_IV] = "Required IV missing ( try CipherSetIV )",
     [CIPHER_ERR_BUFFER_OVERFLOW] = "The buffer size is too small"
 };
 

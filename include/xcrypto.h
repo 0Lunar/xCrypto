@@ -3,14 +3,10 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include "aes.h"
 #include "cipher.h"
-#include "des.h"
 #include "pad.h"
 #include "rng.h"
 #include "rsa.h"
-#include "xmd5.h"
-#include "xsha0.h"
-#include "xsha1.h"
+#include "xhash.h"
 
 #endif

@@ -5,6 +5,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+#define AES_BLOCK_SIZE 16
+#define DES_BLOCK_SIZE 8
+
 
 enum _xcrypto_cipher_modes {
     CIPHER_MODE_NOT_SET,
@@ -36,6 +39,7 @@ enum _xcrypto_cipher_op_state {
     CIPHER_ERR_UNSUPPORTED_MODE,
     CIPHER_ERR_MEM_ALLOC,
     CIPHER_ERR_MISSING_ALGO,
+    CIPHER_ERR_MISSING_BUF,
     CIPHER_ERR_INVALID_BLOCK_SIZE,
     CIPHER_ERR_INVALID_PLAINTEXT_SIZE,
     CIPHER_ERR_INVALID_CIPHERTEXT_SIZE,

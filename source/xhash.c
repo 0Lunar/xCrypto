@@ -2,6 +2,7 @@
 #include "xmd5.h"
 #include "xsha0.h"
 #include "xsha1.h"
+#include "xsha256.h"
 #include <stdlib.h>
 #include <memory.h>
 
@@ -40,6 +41,10 @@ enum _xcrypto_hash_op_state HashSetAlgorithm(struct _xcrypto_hash_ctx *ctx, enum
             ctx->ctx = XSHA1_Init();
             break;
         
+        case XCRYPTO_SHA256:
+            ctx->ctx = XSHA256_Init();
+            break;
+        
         default:
             ctx->error = HASH_ERR_UNSUPPORTED_ALGO;
             return HASH_ERR_UNSUPPORTED_ALGO;
@@ -76,6 +81,10 @@ enum _xcrypto_hash_op_state HashUpdate(struct _xcrypto_hash_ctx *ctx, const uint
 
         case XCRYPTO_SHA1:
             XSHA1_Update(ctx->ctx, buf, bufSize);
+            break;
+        
+        case XCRYPTO_SHA256:
+            XSHA256_Update(ctx->ctx, buf, bufSize);
             break;
         
         default:
@@ -118,6 +127,10 @@ enum _xcrypto_hash_op_state HashFinalize(struct _xcrypto_hash_ctx *ctx, uint8_t 
         
         case XCRYPTO_SHA1:
             XSHA1_Finalize(ctx->ctx, buf);
+            break;
+        
+        case XCRYPTO_SHA256:
+            XSHA256_Finalize(ctx->ctx, buf);
             break;
         
         default:
@@ -185,6 +198,16 @@ enum _xcrypto_hash_op_state HashOneshot(enum _xcrypto_hash_algo algorithm, const
             finalize = (void *)XSHA1_Finalize;
             break;
         
+        case XCRYPTO_SHA256:
+            if ((ctx = XSHA256_Init()) == NULL)
+                return HASH_ERR_MEM_ALLOC;
+            
+            if (XSHA256_Update(ctx, plaintext, plaintextSize) != SHA1_SUCCESS)
+                return HASH_ERR_ONESHOT;
+            
+            finalize = (void *)XSHA256_Finalize;
+            break;
+        
         default:
             return HASH_ERR_UNSUPPORTED_ALGO;
     }
@@ -219,7 +242,8 @@ const uint8_t *HashGetErrorString[] = {
 
 const size_t HashDigestSize[] = {
     [XCRYPTO_HASH_NOT_SET] = 0,
-    [XCRYPTO_MD5] = MD5_DIGEST_LEN,
-    [XCRYPTO_SHA0] = SHA0_DIGEST_LEN,
-    [XCRYPTO_SHA1] = SHA1_DIGEST_LEN
+    [XCRYPTO_MD5] = 16,
+    [XCRYPTO_SHA0] = 20,
+    [XCRYPTO_SHA1] = 20,
+    [XCRYPTO_SHA256] = 32,
 };

@@ -9,6 +9,8 @@
 #define I(B,C,D)        (C ^ (B | ~D))
 #define LEFTROTATE(x,c) (((x) << (c)) | ((x) >> (32 - (c))))
 
+#define MD5_DIGEST_LEN 16
+
 
 static const uint8_t S[] = {
     7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,  7, 12, 17, 22,
@@ -155,8 +157,9 @@ enum _xcrypto_md5_errors XMD5_Update(struct _xcrypto_md5_ctx *ctx, const uint8_t
         if (buf_len > 0) {
             memcpy(ctx->buf, buf + cnt, buf_len);
             ctx->bits += ((uint64_t)buf_len << 3);
-            ctx->buf_len = buf_len;
         }
+
+        ctx->buf_len = buf_len;
     }
 
     ctx->error = MD5_SUCCESS;

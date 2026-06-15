@@ -4,8 +4,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define SHA0_DIGEST_LEN 20
-
 
 enum _xcrypto_sha0_errors {
     SHA0_SUCCESS,

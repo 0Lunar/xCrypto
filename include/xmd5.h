@@ -4,8 +4,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define MD5_DIGEST_LEN 16
-
 
 enum _xcrypto_md5_errors {
     MD5_SUCCESS,

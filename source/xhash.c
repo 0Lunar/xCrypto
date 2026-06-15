@@ -2,6 +2,7 @@
 #include "xmd5.h"
 #include "xsha0.h"
 #include "xsha1.h"
+#include "xsha224.h"
 #include "xsha256.h"
 #include <stdlib.h>
 #include <memory.h>
@@ -39,6 +40,10 @@ enum _xcrypto_hash_op_state HashSetAlgorithm(struct _xcrypto_hash_ctx *ctx, enum
 
         case XCRYPTO_SHA1:
             ctx->ctx = XSHA1_Init();
+            break;
+
+        case XCRYPTO_SHA224:
+            ctx->ctx = XSHA224_Init();
             break;
         
         case XCRYPTO_SHA256:
@@ -81,6 +86,10 @@ enum _xcrypto_hash_op_state HashUpdate(struct _xcrypto_hash_ctx *ctx, const uint
 
         case XCRYPTO_SHA1:
             XSHA1_Update(ctx->ctx, buf, bufSize);
+            break;
+
+        case XCRYPTO_SHA224:
+            XSHA224_Update(ctx->ctx, buf, bufSize);
             break;
         
         case XCRYPTO_SHA256:
@@ -127,6 +136,10 @@ enum _xcrypto_hash_op_state HashFinalize(struct _xcrypto_hash_ctx *ctx, uint8_t 
         
         case XCRYPTO_SHA1:
             XSHA1_Finalize(ctx->ctx, buf);
+            break;
+
+        case XCRYPTO_SHA224:
+            XSHA224_Finalize(ctx->ctx, buf);
             break;
         
         case XCRYPTO_SHA256:
@@ -197,6 +210,16 @@ enum _xcrypto_hash_op_state HashOneshot(enum _xcrypto_hash_algo algorithm, const
             
             finalize = (void *)XSHA1_Finalize;
             break;
+
+        case XCRYPTO_SHA224:
+            if ((ctx = XSHA224_Init()) == NULL)
+                return HASH_ERR_MEM_ALLOC;
+            
+            if (XSHA224_Update(ctx, plaintext, plaintextSize) != SHA1_SUCCESS)
+                return HASH_ERR_ONESHOT;
+            
+            finalize = (void *)XSHA224_Finalize;
+            break;
         
         case XCRYPTO_SHA256:
             if ((ctx = XSHA256_Init()) == NULL)
@@ -245,5 +268,6 @@ const size_t HashDigestSize[] = {
     [XCRYPTO_MD5] = 16,
     [XCRYPTO_SHA0] = 20,
     [XCRYPTO_SHA1] = 20,
+    [XCRYPTO_SHA224] = 28,
     [XCRYPTO_SHA256] = 32,
 };

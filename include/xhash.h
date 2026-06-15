@@ -14,6 +14,7 @@ enum _xcrypto_hash_algo {
     XCRYPTO_MD5,
     XCRYPTO_SHA0,
     XCRYPTO_SHA1,
+    XCRYPTO_SHA224,
     XCRYPTO_SHA256
 };
 

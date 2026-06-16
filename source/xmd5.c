@@ -133,31 +133,27 @@ enum _xcrypto_md5_errors XMD5_Update(struct _xcrypto_md5_ctx *ctx, const uint8_t
     size_t cnt;
 
     buf_len = ctx->buf_len + bufSize;
+    ctx->bits += ((uint64_t)bufSize << 3);
 
     if (buf_len < 64) {
         memcpy(ctx->buf + ctx->buf_len, buf, bufSize);
         ctx->buf_len += bufSize;
-        ctx->bits += ((uint64_t)bufSize << 3);
     }
     else {
         cnt = 64 - ctx->buf_len;
         memcpy(ctx->buf + ctx->buf_len, buf, cnt);
         _md5_digest(ctx);
         buf_len -= 64;
-        ctx->bits += ((uint64_t)cnt << 3);
 
         while (buf_len >= 64) {
             memcpy(ctx->buf, buf + cnt, 64);
             _md5_digest(ctx);
             buf_len -= 64;
             cnt += 64;
-            ctx->bits += 512;
         }
 
-        if (buf_len > 0) {
+        if (buf_len > 0)
             memcpy(ctx->buf, buf + cnt, buf_len);
-            ctx->bits += ((uint64_t)buf_len << 3);
-        }
 
         ctx->buf_len = buf_len;
     }

@@ -4,6 +4,7 @@
 #include "xsha1.h"
 #include "xsha224.h"
 #include "xsha256.h"
+#include "xsha512.h"
 #include <stdlib.h>
 #include <memory.h>
 
@@ -25,6 +26,9 @@ struct _xcrypto_hash_ctx *NewHash() {
 enum _xcrypto_hash_op_state HashSetAlgorithm(struct _xcrypto_hash_ctx *ctx, enum _xcrypto_hash_algo algorithm) {
     if (!ctx)
         return HASH_ERR_NULL_PTR;
+
+    if (ctx->ctx)
+        free(ctx->ctx);
     
     switch (algorithm) {
         case XCRYPTO_HASH_NOT_SET:
@@ -48,6 +52,10 @@ enum _xcrypto_hash_op_state HashSetAlgorithm(struct _xcrypto_hash_ctx *ctx, enum
         
         case XCRYPTO_SHA256:
             ctx->ctx = XSHA256_Init();
+            break;
+        
+        case XCRYPTO_SHA512:
+            ctx->ctx = XSHA512_Init();
             break;
         
         default:
@@ -94,6 +102,10 @@ enum _xcrypto_hash_op_state HashUpdate(struct _xcrypto_hash_ctx *ctx, const uint
         
         case XCRYPTO_SHA256:
             XSHA256_Update(ctx->ctx, buf, bufSize);
+            break;
+        
+        case XCRYPTO_SHA512:
+            XSHA512_Update(ctx->ctx, buf, bufSize);
             break;
         
         default:
@@ -146,6 +158,10 @@ enum _xcrypto_hash_op_state HashFinalize(struct _xcrypto_hash_ctx *ctx, uint8_t 
             XSHA256_Finalize(ctx->ctx, buf);
             break;
         
+        case XCRYPTO_SHA512:
+            XSHA512_Finalize(ctx->ctx, buf);
+            break;
+        
         default:
             ctx->error = HASH_ERR_UNSUPPORTED_ALGO;
             return HASH_ERR_UNSUPPORTED_ALGO;
@@ -156,13 +172,13 @@ enum _xcrypto_hash_op_state HashFinalize(struct _xcrypto_hash_ctx *ctx, uint8_t 
 }
 
 
-enum _xcrypto_hash_op_state HashReset(struct _xcrypto_hash_ctx *ctx, enum _xcrypto_hash_reset_mode mode) {
+enum _xcrypto_hash_op_state HashReset(struct _xcrypto_hash_ctx *ctx) {
     if (!ctx)
         return HASH_ERR_NULL_PTR;
 
     ctx->algorithm = XCRYPTO_HASH_NOT_SET;
 
-    if (mode = HASH_FULL_RESET && ctx->ctx)
+    if (ctx->ctx)
         free(ctx->ctx);
 
     ctx->error = HASH_SUCCESS;
@@ -230,6 +246,16 @@ enum _xcrypto_hash_op_state HashOneshot(enum _xcrypto_hash_algo algorithm, const
             
             finalize = (void *)XSHA256_Finalize;
             break;
+
+        case XCRYPTO_SHA512:
+            if ((ctx = XSHA512_Init()) == NULL)
+                return HASH_ERR_MEM_ALLOC;
+            
+            if (XSHA512_Update(ctx, plaintext, plaintextSize) != SHA1_SUCCESS)
+                return HASH_ERR_ONESHOT;
+            
+            finalize = (void *)XSHA512_Finalize;
+            break;
         
         default:
             return HASH_ERR_UNSUPPORTED_ALGO;
@@ -270,4 +296,5 @@ const size_t HashDigestSize[] = {
     [XCRYPTO_SHA1] = 20,
     [XCRYPTO_SHA224] = 28,
     [XCRYPTO_SHA256] = 32,
+    [XCRYPTO_SHA512] = 64,
 };

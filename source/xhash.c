@@ -4,6 +4,7 @@
 #include "xsha1.h"
 #include "xsha224.h"
 #include "xsha256.h"
+#include "xsha384.h"
 #include "xsha512.h"
 #include <stdlib.h>
 #include <memory.h>
@@ -57,6 +58,10 @@ enum _xcrypto_hash_op_state HashSetAlgorithm(struct _xcrypto_hash_ctx *ctx, enum
             ctx->ctx = XSHA256_Init();
             break;
         
+        case XCRYPTO_SHA384:
+            ctx->ctx = XSHA384_Init();
+            break;
+
         case XCRYPTO_SHA512:
             ctx->ctx = XSHA512_Init();
             break;
@@ -110,6 +115,10 @@ enum _xcrypto_hash_op_state HashUpdate(struct _xcrypto_hash_ctx *ctx, const uint
         
         case XCRYPTO_SHA256:
             XSHA256_Update(ctx->ctx, buf, bufSize);
+            break;
+        
+        case XCRYPTO_SHA384:
+            XSHA384_Update(ctx->ctx, buf, bufSize);
             break;
         
         case XCRYPTO_SHA512:
@@ -170,6 +179,10 @@ enum _xcrypto_hash_op_state HashFinalize(struct _xcrypto_hash_ctx *ctx, uint8_t 
         case XCRYPTO_SHA256:
             XSHA256_Finalize(ctx->ctx, buf);
             break;
+
+        case XCRYPTO_SHA384:
+            XSHA384_Finalize(ctx->ctx, buf);
+            break;
         
         case XCRYPTO_SHA512:
             XSHA512_Finalize(ctx->ctx, buf);
@@ -215,6 +228,10 @@ enum _xcrypto_hash_op_state HashReset(struct _xcrypto_hash_ctx *ctx) {
                 XSHA256_Reset(ctx->ctx);
                 break;
             
+            case XCRYPTO_SHA384:
+                XSHA384_Reset(ctx->ctx);
+                break;
+            
             case XCRYPTO_SHA512:
                 XSHA512_Reset(ctx->ctx);
                 break;
@@ -252,9 +269,12 @@ enum _xcrypto_hash_op_state HashOneshot(enum _xcrypto_hash_algo algorithm, const
     
     if (plaintextSize == 0)
         return HASH_SUCCESS;
+
+    if (digestSize < HashDigestSize[algorithm])
+        return HASH_ERR_BUFFER_OVERFLOW;
     
     void *ctx;
-    void *(* finalize)(void *, uint8_t *);
+    uint32_t error;
 
     switch (algorithm) {
         case XCRYPTO_MD5:
@@ -264,7 +284,7 @@ enum _xcrypto_hash_op_state HashOneshot(enum _xcrypto_hash_algo algorithm, const
             if (XMD5_Update(ctx, plaintext, plaintextSize) != MD5_SUCCESS)
                 return HASH_ERR_ONESHOT;
             
-            finalize = (void *)XMD5_Finalize;
+            error = XMD5_Finalize(ctx, digest);
             break;
 
         case XCRYPTO_SHA0:
@@ -274,7 +294,7 @@ enum _xcrypto_hash_op_state HashOneshot(enum _xcrypto_hash_algo algorithm, const
             if (XSHA0_Update(ctx, plaintext, plaintextSize) != SHA0_SUCCESS)
                 return HASH_ERR_ONESHOT;
             
-            finalize = (void *)XSHA0_Finalize;
+            error = XSHA0_Finalize(ctx, digest);
             break;
         
         case XCRYPTO_SHA1:
@@ -284,7 +304,7 @@ enum _xcrypto_hash_op_state HashOneshot(enum _xcrypto_hash_algo algorithm, const
             if (XSHA1_Update(ctx, plaintext, plaintextSize) != SHA1_SUCCESS)
                 return HASH_ERR_ONESHOT;
             
-            finalize = (void *)XSHA1_Finalize;
+            error = XSHA1_Finalize(ctx, digest);
             break;
 
         case XCRYPTO_SHA224:
@@ -294,7 +314,7 @@ enum _xcrypto_hash_op_state HashOneshot(enum _xcrypto_hash_algo algorithm, const
             if (XSHA224_Update(ctx, plaintext, plaintextSize) != SHA1_SUCCESS)
                 return HASH_ERR_ONESHOT;
             
-            finalize = (void *)XSHA224_Finalize;
+            error = XSHA224_Finalize(ctx, digest);
             break;
         
         case XCRYPTO_SHA256:
@@ -304,7 +324,17 @@ enum _xcrypto_hash_op_state HashOneshot(enum _xcrypto_hash_algo algorithm, const
             if (XSHA256_Update(ctx, plaintext, plaintextSize) != SHA1_SUCCESS)
                 return HASH_ERR_ONESHOT;
             
-            finalize = (void *)XSHA256_Finalize;
+            error = XSHA256_Finalize(ctx, digest);
+            break;
+
+        case XCRYPTO_SHA384:
+            if ((ctx = XSHA384_Init()) == NULL)
+                return HASH_ERR_MEM_ALLOC;
+            
+            if (XSHA384_Update(ctx, plaintext, plaintextSize) != SHA1_SUCCESS)
+                return HASH_ERR_ONESHOT;
+            
+            error = XSHA384_Finalize(ctx, digest);
             break;
 
         case XCRYPTO_SHA512:
@@ -314,24 +344,18 @@ enum _xcrypto_hash_op_state HashOneshot(enum _xcrypto_hash_algo algorithm, const
             if (XSHA512_Update(ctx, plaintext, plaintextSize) != SHA1_SUCCESS)
                 return HASH_ERR_ONESHOT;
             
-            finalize = (void *)XSHA512_Finalize;
+            error = XSHA512_Finalize(ctx, digest);
             break;
         
         default:
             return HASH_ERR_UNSUPPORTED_ALGO;
     }
 
-    if (digestSize < HashDigestSize[algorithm]) {
-        free(ctx);
-        return HASH_ERR_BUFFER_OVERFLOW;
-    }
-
-    if (finalize(ctx, digest) != NULL) {
-        free(ctx);
-        return HASH_ERR_ONESHOT;
-    }
-    
     free(ctx);
+
+    if (error != 0)        
+        return HASH_ERR_ONESHOT;
+    
     return HASH_SUCCESS;
 }
 
@@ -357,5 +381,6 @@ const size_t HashDigestSize[] = {
     [XCRYPTO_SHA1] = 20,
     [XCRYPTO_SHA224] = 28,
     [XCRYPTO_SHA256] = 32,
+    [XCRYPTO_SHA384] = 48,
     [XCRYPTO_SHA512] = 64,
 };

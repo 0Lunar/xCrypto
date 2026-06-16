@@ -35,5 +35,6 @@ typedef enum _xcrypto_md5_errors XMD5_ERRORS;
 XMD5_CTX *XMD5_Init();
 XMD5_ERRORS XMD5_Update(XMD5_CTX *ctx, const uint8_t *buf, size_t bufSize);
 XMD5_ERRORS XMD5_Finalize(XMD5_CTX *ctx, uint8_t *buf);
+XMD5_ERRORS XMD5_Reset(XMD5_CTX *ctx);
 
 #endif

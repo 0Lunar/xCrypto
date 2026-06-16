@@ -189,3 +189,19 @@ enum _xcrypto_sha0_errors XSHA0_Finalize(struct _xcrypto_sha0_ctx *ctx, uint8_t 
     ctx->error = SHA0_SUCCESS;
     return SHA0_SUCCESS;
 }
+
+
+enum _xcrypto_sha0_errors XSHA0_Reset(struct _xcrypto_sha0_ctx *ctx) {
+    ctx->H0 = 0x67452301;
+    ctx->H1 = 0xEFCDAB89;
+    ctx->H2 = 0x98BADCFE;
+    ctx->H3 = 0x10325476;
+    ctx->H4 = 0xC3D2E1F0;
+
+    memset(ctx->buf, 0, 64);
+    ctx->buf_len = 0;
+    ctx->bits = 0;
+
+    ctx->error = SHA0_SUCCESS;
+    return SHA0_SUCCESS;
+}

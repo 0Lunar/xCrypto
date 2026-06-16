@@ -25,8 +25,8 @@ enum _xcrypto_cipher_op_state CipherSetAlgorithm(struct _xcrypto_generic_cipher 
         return CIPHER_ERR_NULL_PTR;
 
     switch (cipher) {
-        case AES:
-        case DES:
+        case CIPHER_AES:
+        case CIPHER_DES:
             ctx->cipher = cipher;
 
             if (ctx->ctx)
@@ -65,7 +65,7 @@ enum _xcrypto_cipher_op_state CipherSetKey(struct _xcrypto_generic_cipher *ctx, 
     }
 
     switch (ctx->cipher) {
-        case AES:
+        case CIPHER_AES:
             if (keyLength != 16 && keyLength != 24 && keyLength != 32) {
                 ctx->error = CIPHER_ERR_INVALID_KEY;
                 return CIPHER_ERR_INVALID_KEY;
@@ -74,7 +74,7 @@ enum _xcrypto_cipher_op_state CipherSetKey(struct _xcrypto_generic_cipher *ctx, 
             ctx->ctx = aes_init(key, keyLength);
             break;
         
-        case DES:
+        case CIPHER_DES:
             if (keyLength != 8) {
                 ctx->error = CIPHER_ERR_INVALID_KEY;
                 return CIPHER_ERR_INVALID_KEY;
@@ -98,10 +98,10 @@ enum _xcrypto_cipher_op_state CipherSetMode(struct _xcrypto_generic_cipher *ctx,
         return CIPHER_ERR_NULL_PTR;
     
     switch (mode) {
-        case ECB:
-        case CBC:
-        case CTR:
-        case OFB:
+        case CIPHER_MODE_ECB:
+        case CIPHER_MODE_CBC:
+        case CIPHER_MODE_CTR:
+        case CIPHER_MODE_OFB:
             ctx->mode = mode;
             break;
         
@@ -185,7 +185,7 @@ static void _inc_nonce(uint8_t *buf, size_t nonceSize) {
 }
 
 
-static enum _xcrypto_cipher_op_state _ECB_encrypt(struct _xcrypto_generic_cipher *ctx, const uint8_t *plaintext, size_t plaintextLength) {    
+static enum _xcrypto_cipher_op_state _CIPHER_MODE_ECB_encrypt(struct _xcrypto_generic_cipher *ctx, const uint8_t *plaintext, size_t plaintextLength) {    
     if (plaintextLength % CipherBlockSize[ctx->cipher] != 0) {
         ctx->error = CIPHER_ERR_INVALID_PLAINTEXT_SIZE;
         return CIPHER_ERR_INVALID_PLAINTEXT_SIZE;
@@ -199,7 +199,7 @@ static enum _xcrypto_cipher_op_state _ECB_encrypt(struct _xcrypto_generic_cipher
     memset(ctx->out, 0, plaintextLength);
     
     switch (ctx->cipher) {
-        case AES:            
+        case CIPHER_AES:            
             for (size_t n = 0; n < plaintextLength; n += AES_BLOCK_SIZE) {
                 _aes_encryptor(ctx->ctx, (plaintext + n));
                 memcpy((ctx->out + n), ((struct _xcrypto_aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
@@ -207,7 +207,7 @@ static enum _xcrypto_cipher_op_state _ECB_encrypt(struct _xcrypto_generic_cipher
             ctx->outLen = plaintextLength;
             break;
         
-        case DES:
+        case CIPHER_DES:
             for (size_t n = 0; n < plaintextLength; n += DES_BLOCK_SIZE) {
                 _des_encryptor(ctx->ctx, (plaintext + n));
                 des_block(((struct _xcrypto_des_cipher *)(ctx->ctx)), (ctx->out + n));
@@ -225,7 +225,7 @@ static enum _xcrypto_cipher_op_state _ECB_encrypt(struct _xcrypto_generic_cipher
 }
 
 
-static enum _xcrypto_cipher_op_state _ECB_decrypt(struct _xcrypto_generic_cipher *ctx, const uint8_t *ciphertext, size_t ciphertextLength) {
+static enum _xcrypto_cipher_op_state _CIPHER_MODE_ECB_decrypt(struct _xcrypto_generic_cipher *ctx, const uint8_t *ciphertext, size_t ciphertextLength) {
     Ciphers cipher = ctx->cipher;
 
     if (ciphertextLength % CipherBlockSize[cipher] != 0) {
@@ -241,7 +241,7 @@ static enum _xcrypto_cipher_op_state _ECB_decrypt(struct _xcrypto_generic_cipher
     memset(ctx->out, 0, ciphertextLength);
     
     switch (cipher) {
-        case AES:
+        case CIPHER_AES:
             for (size_t n = 0; n < ciphertextLength; n += AES_BLOCK_SIZE) {
                 _aes_decryptor(ctx->ctx, (ciphertext + n));
                 memcpy((ctx->out + n), ((struct _xcrypto_aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
@@ -249,7 +249,7 @@ static enum _xcrypto_cipher_op_state _ECB_decrypt(struct _xcrypto_generic_cipher
             ctx->outLen = ciphertextLength;
             break;
         
-        case DES:
+        case CIPHER_DES:
             for (size_t n = 0; n < ciphertextLength; n += DES_BLOCK_SIZE) {
                 _des_decryptor(ctx->ctx, (ciphertext + n));
                 des_block(((struct _xcrypto_des_cipher *)(ctx->ctx)), (ctx->out + n));
@@ -267,7 +267,7 @@ static enum _xcrypto_cipher_op_state _ECB_decrypt(struct _xcrypto_generic_cipher
 }
 
 
-static enum _xcrypto_cipher_op_state _CBC_encrypt(struct _xcrypto_generic_cipher *ctx, const uint8_t *plaintext, size_t plaintextLength) {
+static enum _xcrypto_cipher_op_state _CIPHER_MODE_CBC_encrypt(struct _xcrypto_generic_cipher *ctx, const uint8_t *plaintext, size_t plaintextLength) {
     Ciphers cipher = ctx->cipher;
     
     if (!ctx->iv) {
@@ -291,7 +291,7 @@ static enum _xcrypto_cipher_op_state _CBC_encrypt(struct _xcrypto_generic_cipher
     block = ctx->iv;
 
     switch (cipher) {
-        case AES:
+        case CIPHER_AES:
             for (size_t n = 0; n < plaintextLength; n += AES_BLOCK_SIZE) {
                 _bitwise_xor(block, (plaintext + n), AES_BLOCK_SIZE);
                 _aes_encryptor(ctx->ctx, block);
@@ -301,7 +301,7 @@ static enum _xcrypto_cipher_op_state _CBC_encrypt(struct _xcrypto_generic_cipher
             ctx->outLen = plaintextLength;
             break;
         
-        case DES:
+        case CIPHER_DES:
             for (size_t n = 0; n < plaintextLength; n += DES_BLOCK_SIZE) {
                 _bitwise_xor(block, (plaintext + n), DES_BLOCK_SIZE);
                 _des_encryptor(((struct _xcrypto_des_cipher *)(ctx->ctx)), block);
@@ -321,7 +321,7 @@ static enum _xcrypto_cipher_op_state _CBC_encrypt(struct _xcrypto_generic_cipher
 }
 
 
-static enum _xcrypto_cipher_op_state _CBC_decrypt(struct _xcrypto_generic_cipher *ctx, const uint8_t *ciphertext, size_t ciphertextLength) {
+static enum _xcrypto_cipher_op_state _CIPHER_MODE_CBC_decrypt(struct _xcrypto_generic_cipher *ctx, const uint8_t *ciphertext, size_t ciphertextLength) {
     Ciphers cipher = ctx->cipher;
     
     if (!ctx->iv) {
@@ -345,7 +345,7 @@ static enum _xcrypto_cipher_op_state _CBC_decrypt(struct _xcrypto_generic_cipher
     block = ctx->iv;
 
     switch (ctx->cipher) {
-        case AES:
+        case CIPHER_AES:
             for (size_t n = 0; n < ciphertextLength; n += AES_BLOCK_SIZE) {
                 _aes_decryptor(ctx->ctx, (ciphertext + n));
                 memcpy((ctx->out + n), ((struct _xcrypto_aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
@@ -355,7 +355,7 @@ static enum _xcrypto_cipher_op_state _CBC_decrypt(struct _xcrypto_generic_cipher
             ctx->outLen = ciphertextLength;
             break;
         
-        case DES:
+        case CIPHER_DES:
             for (size_t n = 0; n < ciphertextLength; n += DES_BLOCK_SIZE) {
                 _des_decryptor(ctx->ctx, (ciphertext + n));
                 des_block(((struct _xcrypto_des_cipher *)(ctx->ctx)), (ctx->out + n));
@@ -376,7 +376,7 @@ static enum _xcrypto_cipher_op_state _CBC_decrypt(struct _xcrypto_generic_cipher
 }
 
 
-static enum _xcrypto_cipher_op_state _CTR_encrypt(struct _xcrypto_generic_cipher *ctx, const uint8_t *plaintext, size_t plaintextLength) {
+static enum _xcrypto_cipher_op_state _CIPHER_MODE_CTR_encrypt(struct _xcrypto_generic_cipher *ctx, const uint8_t *plaintext, size_t plaintextLength) {
     Ciphers cipher = ctx->cipher;
 
     if (!ctx->iv) {
@@ -402,7 +402,7 @@ static enum _xcrypto_cipher_op_state _CTR_encrypt(struct _xcrypto_generic_cipher
     memcpy(nonce, ctx->iv, ctx->ivLen);
 
     switch (cipher) {
-        case AES:
+        case CIPHER_AES:
             for (n = 0; n < (plaintextLength - (plaintextLength % AES_BLOCK_SIZE)); n += AES_BLOCK_SIZE) {
                 _aes_encryptor(ctx->ctx, nonce);
                 memcpy((ctx->out + n), ((struct _xcrypto_aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
@@ -420,7 +420,7 @@ static enum _xcrypto_cipher_op_state _CTR_encrypt(struct _xcrypto_generic_cipher
             ctx->outLen = plaintextLength;
             break;
 
-        case DES:
+        case CIPHER_DES:
             for (n = 0; n < (plaintextLength - (plaintextLength % DES_BLOCK_SIZE)); n += DES_BLOCK_SIZE) {
                 _des_encryptor(ctx->ctx, nonce);
                 des_block(ctx->ctx, (ctx->out + n));
@@ -470,18 +470,18 @@ enum _xcrypto_cipher_op_state CipherEncrypt(struct _xcrypto_generic_cipher *ctx,
     enum _xcrypto_cipher_op_state state;
     
     switch(ctx->mode) {
-        case ECB:
-            if ((state = _ECB_encrypt(ctx, plaintext, plaintextLength)) != CIPHER_SUCCESS)
+        case CIPHER_MODE_ECB:
+            if ((state = _CIPHER_MODE_ECB_encrypt(ctx, plaintext, plaintextLength)) != CIPHER_SUCCESS)
                 return state;
             break;
         
-        case CBC:
-            if ((state = _CBC_encrypt(ctx, plaintext, plaintextLength)) != CIPHER_SUCCESS)
+        case CIPHER_MODE_CBC:
+            if ((state = _CIPHER_MODE_CBC_encrypt(ctx, plaintext, plaintextLength)) != CIPHER_SUCCESS)
                 return state;
             break;
         
-        case CTR:
-            if ((state = _CTR_encrypt(ctx, plaintext, plaintextLength)) != CIPHER_SUCCESS)
+        case CIPHER_MODE_CTR:
+            if ((state = _CIPHER_MODE_CTR_encrypt(ctx, plaintext, plaintextLength)) != CIPHER_SUCCESS)
                 return state;
             break;
         
@@ -517,18 +517,18 @@ enum _xcrypto_cipher_op_state CipherDecrypt(struct _xcrypto_generic_cipher *ctx,
     enum _xcrypto_cipher_op_state state;
 
     switch(ctx->mode) {
-        case ECB:
-            if ((state = _ECB_decrypt(ctx, ciphertext, ciphertextLength)) != CIPHER_SUCCESS)
+        case CIPHER_MODE_ECB:
+            if ((state = _CIPHER_MODE_ECB_decrypt(ctx, ciphertext, ciphertextLength)) != CIPHER_SUCCESS)
                 return state;
             break;
         
-        case CBC:
-            if ((state = _CBC_decrypt(ctx, ciphertext, ciphertextLength)) != CIPHER_SUCCESS)
+        case CIPHER_MODE_CBC:
+            if ((state = _CIPHER_MODE_CBC_decrypt(ctx, ciphertext, ciphertextLength)) != CIPHER_SUCCESS)
                 return state;
             break;
         
-        case CTR:
-            if ((state = _CTR_encrypt(ctx, ciphertext, ciphertextLength)) != CIPHER_SUCCESS)
+        case CIPHER_MODE_CTR:
+            if ((state = _CIPHER_MODE_CTR_encrypt(ctx, ciphertext, ciphertextLength)) != CIPHER_SUCCESS)
                 return state;
             break;
         
@@ -621,6 +621,6 @@ const uint8_t *CipherGetErrorString[] = {
 
 const uint32_t CipherBlockSize[] = {
     [CIPHER_NOT_SET] = 0,
-    [AES] = 16,
-    [DES] = 8
+    [CIPHER_AES] = 16,
+    [CIPHER_DES] = 8
 };

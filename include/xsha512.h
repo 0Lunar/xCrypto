@@ -39,5 +39,6 @@ typedef struct _xcrypto_sha512_ctx XSHA512_CTX;
 XSHA512_CTX *XSHA512_Init();
 XSHA512_ERRORS XSHA512_Update(XSHA512_CTX *ctx, const uint8_t *buf, size_t bufSize);
 XSHA512_ERRORS XSHA512_Finalize(XSHA512_CTX *ctx, uint8_t *buf);
+XSHA512_ERRORS XSHA512_Reset(XSHA512_CTX *ctx);
 
 #endif

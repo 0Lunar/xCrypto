@@ -38,5 +38,7 @@ typedef struct _xcrypto_sha224_ctx XSHA224_CTX;
 XSHA224_CTX *XSHA224_Init();
 XSHA224_ERRORS XSHA224_Update(XSHA224_CTX *ctx, const uint8_t *buf, size_t bufSize);
 XSHA224_ERRORS XSHA224_Finalize(XSHA224_CTX *ctx, uint8_t *buf);
+XSHA224_ERRORS XSHA224_Reset(XSHA224_CTX *ctx);
+
 
 #endif

@@ -212,3 +212,17 @@ enum _xcrypto_md5_errors XMD5_Finalize(struct _xcrypto_md5_ctx *ctx, uint8_t *bu
     ctx->error = MD5_SUCCESS;
     return MD5_SUCCESS;
 }
+
+
+enum _xcrypto_md5_errors XMD5_Reset(struct _xcrypto_md5_ctx *ctx) {
+    ctx->A = 0x67452301;
+    ctx->B = 0xefcdab89;
+    ctx->C = 0x98badcfe;
+    ctx->D = 0x10325476;
+    memset(ctx->buf, 0, 64);
+    ctx->buf_len = 0;
+    ctx->bits = 0;
+
+    ctx->error = MD5_SUCCESS;
+    return MD5_SUCCESS;
+}

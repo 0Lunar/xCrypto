@@ -29,13 +29,15 @@ enum _xcrypto_hash_op_state {
     HASH_ERR_MISSING_ALGO,
     HASH_ERR_MISSING_BUF,
     HASH_ERR_BUFFER_OVERFLOW,
-    HASH_ERR_ONESHOT
+    HASH_ERR_ONESHOT,
+    HASH_ERR_FINALIZED,
 };
 
 
 struct _xcrypto_hash_ctx {
     enum _xcrypto_hash_algo algorithm;
     enum _xcrypto_hash_op_state error;
+    uint8_t finalized;
     void *ctx;
 };
 
@@ -51,6 +53,7 @@ HashError HashSetAlgorithm(HashCtx *ctx, HashAlgorithm algorithm);
 HashError HashUpdate(HashCtx *ctx, const uint8_t *buf, size_t bufSize);
 HashError HashFinalize(HashCtx *ctx, uint8_t *buf, size_t bufSize);
 HashError HashReset(HashCtx *ctx);
+HashError HashFree(HashCtx *ctx);
 HashError HashOneshot(HashAlgorithm algorithm, const uint8_t *plaintext, size_t plaintextSize, uint8_t *digest, size_t digestSize);
 
 

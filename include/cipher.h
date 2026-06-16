@@ -11,16 +11,16 @@
 
 enum _xcrypto_cipher_modes {
     CIPHER_MODE_NOT_SET,
-    ECB,
-    CBC,
-    CTR,
-    OFB
+    CIPHER_MODE_ECB,
+    CIPHER_MODE_CBC,
+    CIPHER_MODE_CTR,
+    CIPHER_MODE_OFB
 };
 
 enum _xcrypto_ciphers {
     CIPHER_NOT_SET,
-    AES,
-    DES
+    CIPHER_AES,
+    CIPHER_DES
 };
 
 
@@ -48,7 +48,7 @@ enum _xcrypto_cipher_op_state {
 };
 
 
-extern const uint8_t *GetErrorString[];
+extern const uint8_t *CipherGetErrorString[];
 extern const uint32_t CipherBlockSize[];
 
 
@@ -86,8 +86,6 @@ CipherError CipherFinalize(CipherCtx *ctx);
 CipherError FreeCipher(CipherCtx *ctx);
 CipherError CipherReset(CipherCtx *ctx, CipherResetMode mode);
 CipherError CipherGetError(CipherCtx *ctx);
-
-extern const uint8_t *CipherGetErrorString[];
 
 
 #endif

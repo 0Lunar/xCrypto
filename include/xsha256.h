@@ -38,5 +38,6 @@ typedef struct _xcrypto_sha256_ctx XSHA256_CTX;
 XSHA256_CTX *XSHA256_Init();
 XSHA256_ERRORS XSHA256_Update(XSHA256_CTX *ctx, const uint8_t *buf, size_t bufSize);
 XSHA256_ERRORS XSHA256_Finalize(XSHA256_CTX *ctx, uint8_t *buf);
+XSHA256_ERRORS XSHA256_Reset(XSHA256_CTX *ctx);
 
 #endif

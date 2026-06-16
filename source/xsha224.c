@@ -208,3 +208,22 @@ enum _xcrypto_sha224_errors XSHA224_Finalize(struct _xcrypto_sha224_ctx *ctx, ui
     ctx->error = SHA224_SUCCESS;
     return SHA224_SUCCESS;
 }
+
+
+enum _xcrypto_sha224_errors XSHA224_Reset(struct _xcrypto_sha224_ctx *ctx) {
+    ctx->H0 = 0xc1059ed8;
+    ctx->H1 = 0x367cd507;
+    ctx->H2 = 0x3070dd17;
+    ctx->H3 = 0xf70e5939;
+    ctx->H4 = 0xffc00b31;
+    ctx->H5 = 0x68581511;
+    ctx->H6 = 0x64f98fa7;
+    ctx->H7 = 0xbefa4fa4;
+
+    memset(ctx->buf, 0, 64);
+    ctx->buf_len = 0;
+    ctx->bits = 0;
+
+    ctx->error = SHA224_SUCCESS;
+    return SHA224_SUCCESS;
+}

@@ -17,6 +17,7 @@ struct _xcrypto_hash_ctx *NewHash() {
 
 
     memset(ctx, 0, sizeof(struct _xcrypto_hash_ctx));
+    ctx->algorithm = XCRYPTO_HASH_NOT_SET;
     ctx->error = HASH_SUCCESS;
 
     return ctx;
@@ -27,8 +28,10 @@ enum _xcrypto_hash_op_state HashSetAlgorithm(struct _xcrypto_hash_ctx *ctx, enum
     if (!ctx)
         return HASH_ERR_NULL_PTR;
 
-    if (ctx->ctx)
+    if (ctx->ctx) {
         free(ctx->ctx);
+        ctx->finalized = 0;
+    }
     
     switch (algorithm) {
         case XCRYPTO_HASH_NOT_SET:
@@ -72,6 +75,11 @@ enum _xcrypto_hash_op_state HashSetAlgorithm(struct _xcrypto_hash_ctx *ctx, enum
 enum _xcrypto_hash_op_state HashUpdate(struct _xcrypto_hash_ctx *ctx, const uint8_t *buf, size_t bufSize) {
     if (!ctx)
         return HASH_ERR_NULL_PTR;
+
+    if (ctx->finalized) {
+        ctx->error = HASH_ERR_FINALIZED;
+        return HASH_ERR_FINALIZED;
+    }
     
     if (!buf) {
         ctx->error = HASH_ERR_NULL_PTR;
@@ -109,8 +117,8 @@ enum _xcrypto_hash_op_state HashUpdate(struct _xcrypto_hash_ctx *ctx, const uint
             break;
         
         default:
-            ctx->error = HASH_ERR_INVALID_ARG;
-            return HASH_ERR_INVALID_ARG;
+            ctx->error = HASH_ERR_UNSUPPORTED_ALGO;
+            return HASH_ERR_UNSUPPORTED_ALGO;
     }
 
     ctx->error = HASH_SUCCESS;
@@ -121,6 +129,11 @@ enum _xcrypto_hash_op_state HashUpdate(struct _xcrypto_hash_ctx *ctx, const uint
 enum _xcrypto_hash_op_state HashFinalize(struct _xcrypto_hash_ctx *ctx, uint8_t *buf, size_t bufSize) {
     if (!ctx)
         return HASH_ERR_NULL_PTR;
+
+    if (ctx->finalized) {
+        ctx->error = HASH_ERR_FINALIZED;
+        return HASH_ERR_FINALIZED;
+    }
     
     if (!buf) {
         ctx->error = HASH_ERR_MISSING_BUF;
@@ -167,6 +180,7 @@ enum _xcrypto_hash_op_state HashFinalize(struct _xcrypto_hash_ctx *ctx, uint8_t 
             return HASH_ERR_UNSUPPORTED_ALGO;
     }
 
+    ctx->finalized = 1;
     ctx->error = HASH_SUCCESS;
     return HASH_SUCCESS;
 }
@@ -176,12 +190,58 @@ enum _xcrypto_hash_op_state HashReset(struct _xcrypto_hash_ctx *ctx) {
     if (!ctx)
         return HASH_ERR_NULL_PTR;
 
-    ctx->algorithm = XCRYPTO_HASH_NOT_SET;
+    if (ctx->ctx) {
+        switch (ctx->algorithm) {
+            case XCRYPTO_HASH_NOT_SET:
+                break;
 
+            case XCRYPTO_MD5:
+                XMD5_Reset(ctx->ctx);
+                break;
+            
+            case XCRYPTO_SHA0:
+                XSHA0_Reset(ctx->ctx);
+                break;
+
+            case XCRYPTO_SHA1:
+                XSHA1_Reset(ctx->ctx);
+                break;
+
+            case XCRYPTO_SHA224:
+                XSHA224_Reset(ctx->ctx);
+                break; 
+                
+            case XCRYPTO_SHA256:
+                XSHA256_Reset(ctx->ctx);
+                break;
+            
+            case XCRYPTO_SHA512:
+                XSHA512_Reset(ctx->ctx);
+                break;
+        
+            default:
+                ctx->error = HASH_ERR_UNSUPPORTED_ALGO;
+                return HASH_ERR_UNSUPPORTED_ALGO;
+                break;
+        }
+    }
+
+    ctx->algorithm = XCRYPTO_HASH_NOT_SET;
+    ctx->finalized = 0;
+    ctx->error = HASH_SUCCESS;
+    return HASH_SUCCESS;
+}
+
+
+enum _xcrypto_hash_op_state HashFree(struct _xcrypto_hash_ctx *ctx) {
+    if (!ctx)
+        return HASH_ERR_NULL_PTR;
+    
     if (ctx->ctx)
         free(ctx->ctx);
+    
+    free(ctx);
 
-    ctx->error = HASH_SUCCESS;
     return HASH_SUCCESS;
 }
 
@@ -285,7 +345,8 @@ const uint8_t *HashGetErrorString[] = {
     [HASH_ERR_MISSING_ALGO] = "Algorithm not set ( try HashSetAlgorithm )",
     [HASH_ERR_MISSING_BUF] = "Missing buffer for hashing ( try HashSetBuffer )",
     [HASH_ERR_BUFFER_OVERFLOW] = "The buffer size is too small",
-    [HASH_ERR_ONESHOT] = "Generic error on hash oneshot"
+    [HASH_ERR_ONESHOT] = "Generic error on hash oneshot",
+    [HASH_ERR_FINALIZED] = "You are trying to use a hash that is already finalized ( use HashReset )"
 };
 
 

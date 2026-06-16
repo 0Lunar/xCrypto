@@ -36,6 +36,7 @@ typedef enum _xcrypto_sha0_errors XSHA0_ERRORS;
 XSHA0_CTX *XSHA0_Init();
 XSHA0_ERRORS XSHA0_Update(XSHA0_CTX *ctx, const uint8_t *buf, size_t bufSize);
 XSHA0_ERRORS XSHA0_Finalize(XSHA0_CTX *ctx, uint8_t *buf);
+XSHA0_ERRORS XSHA0_Reset(XSHA0_CTX *ctx);
 
 
 #endif

@@ -209,3 +209,22 @@ enum _xcrypto_sha256_errors XSHA256_Finalize(struct _xcrypto_sha256_ctx *ctx, ui
     ctx->error = SHA256_SUCCESS;
     return SHA256_SUCCESS;
 }
+
+
+enum _xcrypto_sha256_errors XSHA256_Reset(struct _xcrypto_sha256_ctx *ctx) {
+    ctx->H0 = 0x6a09e667;
+    ctx->H1 = 0xbb67ae85;
+    ctx->H2 = 0x3c6ef372;
+    ctx->H3 = 0xa54ff53a;
+    ctx->H4 = 0x510e527f;
+    ctx->H5 = 0x9b05688c;
+    ctx->H6 = 0x1f83d9ab;
+    ctx->H7 = 0x5be0cd19;
+
+    memset(ctx->buf, 0, 64);
+    ctx->buf_len = 0;
+    ctx->bits = 0;
+    
+    ctx->error = SHA256_SUCCESS;
+    return SHA256_SUCCESS;
+}

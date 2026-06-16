@@ -240,3 +240,23 @@ enum _xcrypto_sha512_errors XSHA512_Finalize(struct _xcrypto_sha512_ctx *ctx, ui
     ctx->error = SHA512_SUCCESS;
     return SHA512_SUCCESS;
 }
+
+
+enum _xcrypto_sha512_errors XSHA512_Reset(struct _xcrypto_sha512_ctx *ctx) {
+    ctx->H0 = 0x6a09e667f3bcc908;
+    ctx->H1 = 0xbb67ae8584caa73b;
+    ctx->H2 = 0x3c6ef372fe94f82b;
+    ctx->H3 = 0xa54ff53a5f1d36f1;
+    ctx->H4 = 0x510e527fade682d1;
+    ctx->H5 = 0x9b05688c2b3e6c1f;
+    ctx->H6 = 0x1f83d9abfb41bd6b;
+    ctx->H7 = 0x5be0cd19137e2179;
+
+    memset(ctx->buf, 0, 128);
+    ctx->buf_len = 0;
+    ctx->hi_bits = 0;
+    ctx->lo_bits = 0;
+
+    ctx->error = SHA512_SUCCESS;
+    return SHA512_SUCCESS;
+}

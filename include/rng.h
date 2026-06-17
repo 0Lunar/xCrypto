@@ -1,5 +1,5 @@
-#ifndef __xcrypto_rng_header__
-#define __xcrypto_rng_header__
+#ifndef XCRYPTO_RNG_HEADER_H
+#define XCRYPTO_RNG_HEADER_H
 
 
 #include <stdio.h>

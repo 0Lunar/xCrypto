@@ -1,5 +1,5 @@
-#ifndef __xcrypto_xsha0_header__
-#define __xcrypto_xsha0_header__
+#ifndef XCRYPTO_SHA0_HEADER_H
+#define XCRYPTO_SHA0_HEADER_H
 
 #include <stdint.h>
 #include <stddef.h>

@@ -1,5 +1,5 @@
-#ifndef __xcrypto_xmd5_header__
-#define __xcrypto_xmd5_header__
+#ifndef XCRYPTO_MD5_HEADER_H
+#define XCRYPTO_MD5_HEADER_H
 
 #include <stdint.h>
 #include <stddef.h>

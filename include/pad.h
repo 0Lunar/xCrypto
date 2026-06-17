@@ -1,5 +1,5 @@
-#ifndef __xcrypto_pad_header__
-#define __xcrypto_pad_header__
+#ifndef XCRYPTO_PAD_HEADER_H
+#define XCRYPTO_PAD_HEADER_H
 
 
 #include <stddef.h>

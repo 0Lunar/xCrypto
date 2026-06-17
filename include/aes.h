@@ -1,5 +1,5 @@
-#ifndef __xcrypto_aes_header__
-#define __xcrypto_aes_header__
+#ifndef XCRYPTO_AES_HEADER_H
+#define XCRYPTO_AES_HEADER_H
 
 
 #include <stddef.h>

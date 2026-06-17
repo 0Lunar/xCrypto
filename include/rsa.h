@@ -1,5 +1,5 @@
-#ifndef __xcrypto_rsa_header__
-#define __xcrypto_rsa_header__
+#ifndef XCRYPTO_RSA_HEADER_H
+#define XCRYPTO_RSA_HEADER_H
 
 
 #include <stddef.h>

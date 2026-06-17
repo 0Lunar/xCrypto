@@ -1,5 +1,5 @@
-#ifndef __xcrypto_des_header__
-#define __xcrypto_des_header__
+#ifndef XCRYPTO_DES_HEADER_H
+#define XCRYPTO_DES_HEADER_H
 
 
 #define DES_BLOCK_SIZE 8

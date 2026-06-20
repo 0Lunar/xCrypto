@@ -5,7 +5,6 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <gmp.h>
-#include "rng.h"
 
 
 enum _xcrypto_rsa_ctx_errors {

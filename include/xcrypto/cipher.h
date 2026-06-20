@@ -5,9 +5,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define AES_BLOCK_SIZE 16
-#define DES_BLOCK_SIZE 8
-
 
 enum _xcrypto_cipher_modes {
     CIPHER_MODE_NOT_SET,

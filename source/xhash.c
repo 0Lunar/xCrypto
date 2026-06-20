@@ -1,11 +1,11 @@
-#include "xhash.h"
-#include "xmd5.h"
-#include "xsha0.h"
-#include "xsha1.h"
-#include "xsha224.h"
-#include "xsha256.h"
-#include "xsha384.h"
-#include "xsha512.h"
+#include "xcrypto/xhash.h"
+#include "xcrypto/xmd5.h"
+#include "xcrypto/xsha0.h"
+#include "xcrypto/xsha1.h"
+#include "xcrypto/xsha224.h"
+#include "xcrypto/xsha256.h"
+#include "xcrypto/xsha384.h"
+#include "xcrypto/xsha512.h"
 #include <stdlib.h>
 #include <memory.h>
 

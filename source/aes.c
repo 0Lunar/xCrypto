@@ -1,6 +1,6 @@
 #include <stdlib.h>
-#include <string.h>
-#include "aes.h"
+#include <memory.h>
+#include "xcrypto/aes.h"
 
 #define IS_LITTLE_ENDIAN() ((*(uint8_t*)&(uint16_t){1}) == 1)
 
@@ -167,7 +167,7 @@ static void MixColumns( struct _xcrypto_aes_cipher *cipher ) {
 }
 
 
-uint8_t gmul( uint8_t a, uint8_t b ) {
+static uint8_t gmul( uint8_t a, uint8_t b ) {
     uint8_t p = 0;
     uint8_t hi_bit_set;
     for (int i = 0; i < 8; i++) {
@@ -204,7 +204,7 @@ static void UnMixColumns( struct _xcrypto_aes_cipher *cipher ) {
 }
 
 
-void _aes_encryptor( struct _xcrypto_aes_cipher *cipher, const uint8_t *plaintext ) {
+void AesEncryptor( struct _xcrypto_aes_cipher *cipher, const uint8_t *plaintext ) {
     uint8_t rounds = 6 + ((cipher->key_size >> 2) & 0xFF);
 
     memcpy(cipher->state, plaintext, 16);
@@ -223,7 +223,7 @@ void _aes_encryptor( struct _xcrypto_aes_cipher *cipher, const uint8_t *plaintex
 }
 
 
-void _aes_decryptor( struct _xcrypto_aes_cipher *cipher, const uint8_t *ciphertext ) {
+void AesDecryptor( struct _xcrypto_aes_cipher *cipher, const uint8_t *ciphertext ) {
     uint8_t rounds = 6 + ((cipher->key_size >> 2) & 0xFF);
 
     memcpy(cipher->state, ciphertext, 16);
@@ -240,7 +240,7 @@ void _aes_decryptor( struct _xcrypto_aes_cipher *cipher, const uint8_t *cipherte
 }
 
 
-struct _xcrypto_aes_cipher * aes_init( const uint8_t *key, size_t keyLength ) {
+struct _xcrypto_aes_cipher * AesInit( const uint8_t *key, size_t keyLength ) {
     if (!(keyLength == 16 || keyLength == 24 || keyLength == 32))
         return NULL;
     
@@ -265,4 +265,20 @@ struct _xcrypto_aes_cipher * aes_init( const uint8_t *key, size_t keyLength ) {
     keyExpansion(cipher);
 
     return cipher;
+}
+
+
+void AesFree( struct _xcrypto_aes_cipher *cipher ) {
+    if (!cipher)
+        return;
+    
+    free(cipher);
+}
+
+
+void AesGetBlock( struct _xcrypto_aes_cipher *cipher, uint8_t *buf ) {
+    if (!cipher)
+        return;
+    
+    memcpy(buf, cipher->state, AES_BLOCK_SIZE);
 }

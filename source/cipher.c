@@ -1,6 +1,6 @@
-#include "cipher.h"
-#include "aes.h"
-#include "des.h"
+#include "xcrypto/cipher.h"
+#include "xcrypto/aes.h"
+#include "xcrypto/des.h"
 #include <memory.h>
 
 #define IS_LITTLE_ENDIAN() ((*(uint8_t*)&(uint16_t){1}) == 1)
@@ -71,7 +71,7 @@ enum _xcrypto_cipher_op_state CipherSetKey(struct _xcrypto_generic_cipher *ctx, 
                 return CIPHER_ERR_INVALID_KEY;
             }
 
-            ctx->ctx = aes_init(key, keyLength);
+            ctx->ctx = AesInit(key, keyLength);
             break;
         
         case CIPHER_DES:
@@ -80,7 +80,7 @@ enum _xcrypto_cipher_op_state CipherSetKey(struct _xcrypto_generic_cipher *ctx, 
                 return CIPHER_ERR_INVALID_KEY;
             }
 
-            ctx->ctx = des_init(key);
+            ctx->ctx = DesInit(key);
             break;
         
         default:
@@ -201,7 +201,7 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_ECB_encrypt(struct _xcrypto_ge
     switch (ctx->cipher) {
         case CIPHER_AES:            
             for (size_t n = 0; n < plaintextLength; n += AES_BLOCK_SIZE) {
-                _aes_encryptor(ctx->ctx, (plaintext + n));
+                AesEncryptor(ctx->ctx, (plaintext + n));
                 memcpy((ctx->out + n), ((struct _xcrypto_aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
             }
             ctx->outLen = plaintextLength;
@@ -209,8 +209,8 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_ECB_encrypt(struct _xcrypto_ge
         
         case CIPHER_DES:
             for (size_t n = 0; n < plaintextLength; n += DES_BLOCK_SIZE) {
-                _des_encryptor(ctx->ctx, (plaintext + n));
-                des_block(((struct _xcrypto_des_cipher *)(ctx->ctx)), (ctx->out + n));
+                DesEncryptor(ctx->ctx, (plaintext + n));
+                GetDesBlock(((struct _xcrypto_des_cipher *)(ctx->ctx)), (ctx->out + n));
             }
             ctx->outLen = plaintextLength;
             break;
@@ -243,7 +243,7 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_ECB_decrypt(struct _xcrypto_ge
     switch (cipher) {
         case CIPHER_AES:
             for (size_t n = 0; n < ciphertextLength; n += AES_BLOCK_SIZE) {
-                _aes_decryptor(ctx->ctx, (ciphertext + n));
+                AesDecryptor(ctx->ctx, (ciphertext + n));
                 memcpy((ctx->out + n), ((struct _xcrypto_aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
             }
             ctx->outLen = ciphertextLength;
@@ -251,8 +251,8 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_ECB_decrypt(struct _xcrypto_ge
         
         case CIPHER_DES:
             for (size_t n = 0; n < ciphertextLength; n += DES_BLOCK_SIZE) {
-                _des_decryptor(ctx->ctx, (ciphertext + n));
-                des_block(((struct _xcrypto_des_cipher *)(ctx->ctx)), (ctx->out + n));
+                DesDecryptor(ctx->ctx, (ciphertext + n));
+                GetDesBlock(((struct _xcrypto_des_cipher *)(ctx->ctx)), (ctx->out + n));
             }
             ctx->outLen = ciphertextLength;
             break;
@@ -294,7 +294,7 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_CBC_encrypt(struct _xcrypto_ge
         case CIPHER_AES:
             for (size_t n = 0; n < plaintextLength; n += AES_BLOCK_SIZE) {
                 _bitwise_xor(block, (plaintext + n), AES_BLOCK_SIZE);
-                _aes_encryptor(ctx->ctx, block);
+                AesEncryptor(ctx->ctx, block);
                 memcpy((ctx->out + n), ((struct _xcrypto_aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
                 memcpy(block, (ctx->out + n), AES_BLOCK_SIZE);
             }
@@ -304,8 +304,8 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_CBC_encrypt(struct _xcrypto_ge
         case CIPHER_DES:
             for (size_t n = 0; n < plaintextLength; n += DES_BLOCK_SIZE) {
                 _bitwise_xor(block, (plaintext + n), DES_BLOCK_SIZE);
-                _des_encryptor(((struct _xcrypto_des_cipher *)(ctx->ctx)), block);
-                des_block(((struct _xcrypto_des_cipher *)(ctx->ctx)), (ctx->out + n));
+                DesEncryptor(((struct _xcrypto_des_cipher *)(ctx->ctx)), block);
+                GetDesBlock(((struct _xcrypto_des_cipher *)(ctx->ctx)), (ctx->out + n));
                 memcpy(block, (ctx->out + n), DES_BLOCK_SIZE);
             }
             ctx->outLen = plaintextLength;
@@ -347,7 +347,7 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_CBC_decrypt(struct _xcrypto_ge
     switch (ctx->cipher) {
         case CIPHER_AES:
             for (size_t n = 0; n < ciphertextLength; n += AES_BLOCK_SIZE) {
-                _aes_decryptor(ctx->ctx, (ciphertext + n));
+                AesDecryptor(ctx->ctx, (ciphertext + n));
                 memcpy((ctx->out + n), ((struct _xcrypto_aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
                 _bitwise_xor((ctx->out + n), block, AES_BLOCK_SIZE);
                 memcpy(block, (ciphertext + n), AES_BLOCK_SIZE);
@@ -357,8 +357,8 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_CBC_decrypt(struct _xcrypto_ge
         
         case CIPHER_DES:
             for (size_t n = 0; n < ciphertextLength; n += DES_BLOCK_SIZE) {
-                _des_decryptor(ctx->ctx, (ciphertext + n));
-                des_block(((struct _xcrypto_des_cipher *)(ctx->ctx)), (ctx->out + n));
+                DesDecryptor(ctx->ctx, (ciphertext + n));
+                GetDesBlock(((struct _xcrypto_des_cipher *)(ctx->ctx)), (ctx->out + n));
                 _bitwise_xor((ctx->out + n), block, DES_BLOCK_SIZE);
                 memcpy(block, (ciphertext + n), DES_BLOCK_SIZE);
             }
@@ -404,14 +404,14 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_CTR_encrypt(struct _xcrypto_ge
     switch (cipher) {
         case CIPHER_AES:
             for (n = 0; n < (plaintextLength - (plaintextLength % AES_BLOCK_SIZE)); n += AES_BLOCK_SIZE) {
-                _aes_encryptor(ctx->ctx, nonce);
+                AesEncryptor(ctx->ctx, nonce);
                 memcpy((ctx->out + n), ((struct _xcrypto_aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
                 _bitwise_xor((ctx->out + n), (plaintext + n), AES_BLOCK_SIZE);
                 _inc_nonce(nonce + nonceIdx, counterSize);
             }
 
             if (plaintextLength % AES_BLOCK_SIZE != 0) {
-                _aes_encryptor(ctx->ctx, nonce);
+                AesEncryptor(ctx->ctx, nonce);
                 memcpy((ctx->out + n), ((struct _xcrypto_aes_cipher *)(ctx->ctx))->state, (plaintextLength % AES_BLOCK_SIZE));
                 _bitwise_xor((ctx->out + n), (plaintext + n), (plaintextLength % AES_BLOCK_SIZE));
                 _inc_nonce(nonce + nonceIdx, counterSize);
@@ -422,15 +422,15 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_CTR_encrypt(struct _xcrypto_ge
 
         case CIPHER_DES:
             for (n = 0; n < (plaintextLength - (plaintextLength % DES_BLOCK_SIZE)); n += DES_BLOCK_SIZE) {
-                _des_encryptor(ctx->ctx, nonce);
-                des_block(ctx->ctx, (ctx->out + n));
+                DesEncryptor(ctx->ctx, nonce);
+                GetDesBlock(ctx->ctx, (ctx->out + n));
                 _bitwise_xor((ctx->out + n), (plaintext + n), DES_BLOCK_SIZE);
                 _inc_nonce(nonce + nonceIdx, counterSize);
             }
 
             if (plaintextLength % DES_BLOCK_SIZE != 0) {
-                _des_encryptor(ctx->ctx, nonce);
-                des_block(ctx->ctx, (ctx->out + n));
+                DesEncryptor(ctx->ctx, nonce);
+                GetDesBlock(ctx->ctx, (ctx->out + n));
                 _bitwise_xor((ctx->out + n), (plaintext + n), (plaintextLength % DES_BLOCK_SIZE));
                 _inc_nonce(nonce + nonceIdx, counterSize);
             }

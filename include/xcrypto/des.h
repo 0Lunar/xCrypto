@@ -22,10 +22,10 @@ struct _xcrypto_des_cipher
 typedef struct _xcrypto_des_cipher DesCipher;
 
 
-void _des_encryptor( struct _xcrypto_des_cipher *cipher, const uint8_t *plaintext );
-void _des_decryptor( struct _xcrypto_des_cipher *cipher, const uint8_t *ciphertext );
-struct _xcrypto_des_cipher *des_init( const uint8_t *key );
-void des_block( struct _xcrypto_des_cipher *cipher, uint8_t *out );
+void DesEncryptor( DesCipher *cipher, const uint8_t *plaintext );
+void DesDecryptor( DesCipher *cipher, const uint8_t *ciphertext );
+DesCipher *DesInit( const uint8_t *key );
+void GetDesBlock( struct _xcrypto_des_cipher *cipher, uint8_t *out );
 
 
 #endif

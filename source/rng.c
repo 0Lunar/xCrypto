@@ -1,4 +1,4 @@
-#include "rng.h"
+#include "xcrypto/rng.h"
 
 
 void csprng_buf( void *buf, size_t len ) {

@@ -1,4 +1,4 @@
-#include "xsha0.h"
+#include "xcrypto/xsha0.h"
 #include <stdlib.h>
 #include <memory.h>
 

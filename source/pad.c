@@ -1,131 +1,127 @@
-#include "pad.h"
+#include "xcrypto/pad.h"
 
 
-static uint8_t *__pkcs7_pad( const uint8_t *msg, const size_t msgLen, const uint8_t padSize, size_t *newMsgLen ) {
-    uint8_t *paddedMsg;
+static enum _xcrypto_padding_errors __pkcs7_pad( const uint8_t *msg, size_t msgLen, uint8_t *padBuf, uint8_t padSize, size_t *newMsgLen ) {
     size_t paddedLen;
     uint8_t padch;
 
     padch = (padSize - (msgLen % padSize));
     paddedLen = msgLen + padch;
-    *newMsgLen = paddedLen;
 
-    if ( (paddedMsg = malloc(paddedLen)) == NULL )
-        return NULL;
+    if (newMsgLen)
+        *newMsgLen = paddedLen;
     
-    memcpy(paddedMsg, msg, msgLen);
+    memcpy(padBuf, msg, msgLen);
 
     for (size_t n = msgLen; n < paddedLen; n++)
-        paddedMsg[n] = padch;
-
-    return paddedMsg;
+        padBuf[n] = padch;
+    
+    return PAD_SUCCESS;
 }
 
 
-static uint8_t *__pkcs7_unpad( const uint8_t *padded, const size_t paddedLen, const uint8_t padSize, size_t *newMsgLen ) {
-    uint8_t *msg;
+static enum _xcrypto_padding_errors __pkcs7_unpad( const uint8_t *padded, size_t paddedLen, uint8_t *unpadBuf, uint8_t padSize, size_t *newMsgLen ) {
     size_t msgLen;
     uint8_t padch;
 
     padch = padded[paddedLen - 1];
 
     if (padch > padSize)
-        return NULL;
+        return PAD_ERR_INVALID_SIZE;
 
     msgLen = paddedLen - (size_t)padch;
-    *newMsgLen = msgLen;
+
+    if (newMsgLen)
+        *newMsgLen = msgLen;
 
     for ( size_t n = paddedLen - 2; n >= msgLen; n-- ) {
         if (padded[n] != padch)
-            return NULL;
+            return PAD_ERR_INVALID_SEQ;
     }
 
-    if ((msg = (uint8_t *)malloc(msgLen + 1)) == NULL)
-        return NULL;
-
-    memcpy(msg, padded, msgLen);
-
-    return msg;
+    memcpy(unpadBuf, padded, msgLen);
+    return PAD_SUCCESS;
 }
 
 
-static uint8_t *__x923_pad( const uint8_t *msg, const size_t msgLen, const uint8_t padSize, size_t *newMsgLen ) {
-    uint8_t *paddedMsg;
+static enum _xcrypto_padding_errors __x923_pad( const uint8_t *msg, size_t msgLen, uint8_t *padBuf, uint8_t padSize, size_t *newMsgLen ) {
     size_t paddedLen;
     uint8_t padch;
 
     padch = (padSize - (msgLen % padSize));
     paddedLen = msgLen + padch;
-    *newMsgLen = paddedLen;
 
-    if ((paddedMsg = malloc(paddedLen)) == NULL)
-        return NULL;
+    if (newMsgLen)
+        *newMsgLen = paddedLen;
     
-    memcpy(paddedMsg, msg, msgLen);
+    memcpy(padBuf, msg, msgLen);
     
     for ( size_t n = msgLen; n < paddedLen - 1; n++ )
-        paddedMsg[n] = 0;
+        padBuf[n] = 0;
 
-    paddedMsg[paddedLen - 1] = padch;
-
-    return paddedMsg;
+    padBuf[paddedLen - 1] = padch;
+    return PAD_SUCCESS;
 }
 
 
-static uint8_t *__x923_unpad( const uint8_t *padded, const size_t paddedLen, const uint8_t padSize, size_t *newMsgLen ) {
-    uint8_t *msg;
+static enum _xcrypto_padding_errors __x923_unpad( const uint8_t *padded, size_t paddedLen, uint8_t *unpadBuf, uint8_t padSize, size_t *newMsgLen ) {
     size_t msgLen;
     uint8_t padch;
 
     padch = padded[paddedLen - 1];
 
     if (padch > padSize)
-        return NULL;
+        return PAD_ERR_INVALID_SIZE;
 
     msgLen = paddedLen - (size_t)padch;
-    *newMsgLen = msgLen;
+
+    if (newMsgLen)
+        *newMsgLen = msgLen;
 
     for ( size_t n = paddedLen - 2; n >= msgLen; n-- ) {
-        if (padded[n] != 0) {
-            return NULL;
-        }
+        if (padded[n] != 0)
+            return PAD_ERR_INVALID_SEQ;
     }
 
-    if ((msg = (uint8_t *)malloc(msgLen + 1)) == NULL)
-        return NULL;
-
-    memcpy(msg, padded, msgLen);
-
-    return msg;
+    memcpy(unpadBuf, padded, msgLen);
+    return PAD_SUCCESS;
 }
 
 
-uint8_t *Padder(enum _xcrypto_padding_types padding, uint8_t *msg, size_t msgLen, uint8_t padSize, size_t *newMsgLen) {
+enum _xcrypto_padding_errors Padder(enum _xcrypto_padding_types padding, const uint8_t *msg, size_t msgLen, uint8_t *padBuf, uint8_t padSize, size_t *newMsgLen) {
     switch (padding) {
         case PKCS7:
-            return __pkcs7_pad(msg, msgLen, padSize, newMsgLen);
+            return __pkcs7_pad(msg, msgLen, padBuf, padSize, newMsgLen);
         
         case X923:
-            return __x923_pad(msg, msgLen, padSize, newMsgLen);
+            return __x923_pad(msg, msgLen, padBuf, padSize, newMsgLen);
         
         default:
-            return NULL;
+            return PAD_ERR_UNSUPPORTED_ALGO;
             break;
     }
 }
 
 
-uint8_t *Unpadder(enum _xcrypto_padding_types padding, uint8_t *padded, size_t paddedLen, uint8_t padSize, size_t *newMsgLen) {
-    switch (padding)
-    {
+enum _xcrypto_padding_errors Unpadder(enum _xcrypto_padding_types padding, uint8_t *padded, size_t paddedLen, uint8_t *unpadBuf, uint8_t padSize, size_t *newMsgLen) {
+    switch (padding) {
     case PKCS7:
-        return __pkcs7_unpad(padded, paddedLen, padSize, newMsgLen);
+        return __pkcs7_unpad(padded, paddedLen, unpadBuf, padSize, newMsgLen);
     
     case X923:
-        return __x923_unpad(padded, paddedLen, padSize, newMsgLen);
+        return __x923_unpad(padded, paddedLen, unpadBuf, padSize, newMsgLen);
     
     default:
-        return NULL;
+        return PAD_ERR_UNSUPPORTED_ALGO;
         break;
     }
 }
+
+
+const uint8_t *PadGetErrorString[] = {
+    [PAD_SUCCESS] = "Success",
+    [PAD_ERR_NULL_PTR] = "Parameter with null pointer",
+    [PAD_ERR_UNSUPPORTED_ALGO] = "Algorithm not supported or non-existent",
+    [PAD_ERR_INVALID_SIZE] = "The padding size does not match",
+    [PAD_ERR_INVALID_SEQ] = "Invalid padding"
+};

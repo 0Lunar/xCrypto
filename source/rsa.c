@@ -1,4 +1,5 @@
-#include "rsa.h"
+#include "xcrypto/rsa.h"
+#include "xcrypto/rng.h"
 #include <stdlib.h>
 #include <memory.h>
 

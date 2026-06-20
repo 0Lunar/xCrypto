@@ -4,10 +4,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define MD5_DIGEST_SIZE 16
-#define SHA0_DIGEST_SIZE 20
-#define SHA1_DIGEST_SIZE 20
-
 
 enum _xcrypto_hash_algo {
     XCRYPTO_HASH_NOT_SET,

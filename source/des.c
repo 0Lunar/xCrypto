@@ -1,4 +1,4 @@
-#include "des.h"
+#include "xcrypto/des.h"
 #include <stdlib.h>
 
 
@@ -58,7 +58,7 @@ static uint32_t leftShift( uint32_t val, uint8_t round ) {
 }
 
 
-void keyTransformation( struct _xcrypto_des_cipher *cipher ) {
+static void keyTransformation( struct _xcrypto_des_cipher *cipher ) {
     uint32_t C, D;
 
     permutedChoice_1(cipher, &C, &D);
@@ -137,7 +137,7 @@ static void finalPermutation( struct _xcrypto_des_cipher *cipher ) {
 }
 
 
-void _des_encryptor( struct _xcrypto_des_cipher *cipher, const uint8_t *plaintext ) {
+void DesEncryptor( struct _xcrypto_des_cipher *cipher, const uint8_t *plaintext ) {
     uint32_t L, R, new_R;
     uint64_t expanded_r_block;
 
@@ -168,7 +168,7 @@ void _des_encryptor( struct _xcrypto_des_cipher *cipher, const uint8_t *plaintex
 }
 
 
-void _des_decryptor( struct _xcrypto_des_cipher *cipher, const uint8_t *ciphertext ) {
+void DesDecryptor( struct _xcrypto_des_cipher *cipher, const uint8_t *ciphertext ) {
     uint32_t L, R, new_R;
     uint64_t expanded_r_block;
  
@@ -198,7 +198,7 @@ void _des_decryptor( struct _xcrypto_des_cipher *cipher, const uint8_t *cipherte
 }
 
 
-struct _xcrypto_des_cipher *des_init( const uint8_t *key ) {
+struct _xcrypto_des_cipher *DesInit( const uint8_t *key ) {
     if (!key)
         return NULL;
 
@@ -222,7 +222,7 @@ struct _xcrypto_des_cipher *des_init( const uint8_t *key ) {
 }
 
 
-void des_block( struct _xcrypto_des_cipher *cipher, uint8_t *out ) {
+void GetDesBlock( struct _xcrypto_des_cipher *cipher, uint8_t *out ) {
     if (!cipher || !out)
         return;
 

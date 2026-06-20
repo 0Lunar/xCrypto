@@ -21,9 +21,11 @@ struct _xcrypto_aes_cipher {
 typedef struct _xcrypto_aes_cipher AesCipher;
 
 
-void _aes_encryptor( struct _xcrypto_aes_cipher *cipher, const uint8_t *plaintext );
-void _aes_decryptor( struct _xcrypto_aes_cipher *cipher, const uint8_t *ciphertext );
-struct _xcrypto_aes_cipher * aes_init( const uint8_t *key, size_t keyLength );
+void AesEncryptor( AesCipher *cipher, const uint8_t *plaintext );
+void AesDecryptor( AesCipher *cipher, const uint8_t *ciphertext );
+AesCipher * AesInit( const uint8_t *key, size_t keyLength );
+void AesFree( AesCipher *cipher );
+void AesGetBlock( AesCipher *cipher, uint8_t *buf );
 
 
 #endif

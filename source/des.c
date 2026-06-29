@@ -162,7 +162,6 @@ void DesEncryptor( struct _xcrypto_des_cipher *cipher, const uint8_t *plaintext 
         R = new_R;
     }
 
-    /* swap finale prima di FP */
     cipher->block = ((uint64_t)R << 32) | L;
     finalPermutation(cipher);
 }
@@ -222,7 +221,7 @@ struct _xcrypto_des_cipher *DesInit( const uint8_t *key ) {
 }
 
 
-void GetDesBlock( struct _xcrypto_des_cipher *cipher, uint8_t *out ) {
+void DesGetBlock( struct _xcrypto_des_cipher *cipher, uint8_t *out ) {
     if (!cipher || !out)
         return;
 

@@ -29,6 +29,7 @@ enum _xcrypto_cipher_reset_mode {
 
 enum _xcrypto_cipher_op_state {
     CIPHER_SUCCESS,
+    CIPHER_ERR_NOT_IMPLEMENTED,
     CIPHER_ERR_INVALID_ARG,
     CIPHER_ERR_NULL_PTR,
     CIPHER_ERR_UNSUPPORTED_ALGO,
@@ -41,6 +42,7 @@ enum _xcrypto_cipher_op_state {
     CIPHER_ERR_INVALID_PLAINTEXT_SIZE,
     CIPHER_ERR_INVALID_CIPHERTEXT_SIZE,
     CIPHER_ERR_MISSING_IV,
+    CIPHER_ERR_INVALID_IV_SIZE,
     CIPHER_ERR_BUFFER_OVERFLOW
 };
 

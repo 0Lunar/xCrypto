@@ -195,22 +195,20 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_ECB_encrypt(struct _xcrypto_ge
         ctx->error = CIPHER_ERR_BUFFER_OVERFLOW;
         return CIPHER_ERR_BUFFER_OVERFLOW;
     }
-
-    memset(ctx->out, 0, plaintextLength);
     
     switch (ctx->cipher) {
         case CIPHER_AES:            
             for (size_t n = 0; n < plaintextLength; n += AES_BLOCK_SIZE) {
-                AesEncryptor(ctx->ctx, (plaintext + n));
-                memcpy((ctx->out + n), ((struct _xcrypto_aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
+                AesEncryptor(ctx->ctx, plaintext + n);
+                AesGetBlock(ctx->ctx, ctx->out + n);
             }
             ctx->outLen = plaintextLength;
             break;
         
         case CIPHER_DES:
             for (size_t n = 0; n < plaintextLength; n += DES_BLOCK_SIZE) {
-                DesEncryptor(ctx->ctx, (plaintext + n));
-                GetDesBlock(((struct _xcrypto_des_cipher *)(ctx->ctx)), (ctx->out + n));
+                DesEncryptor(ctx->ctx, plaintext + n);
+                DesGetBlock(ctx->ctx, ctx->out + n);
             }
             ctx->outLen = plaintextLength;
             break;
@@ -237,14 +235,12 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_ECB_decrypt(struct _xcrypto_ge
         ctx->error = CIPHER_ERR_BUFFER_OVERFLOW;
         return CIPHER_ERR_BUFFER_OVERFLOW;
     }
-
-    memset(ctx->out, 0, ciphertextLength);
     
     switch (cipher) {
         case CIPHER_AES:
             for (size_t n = 0; n < ciphertextLength; n += AES_BLOCK_SIZE) {
                 AesDecryptor(ctx->ctx, (ciphertext + n));
-                memcpy((ctx->out + n), ((struct _xcrypto_aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
+                AesGetBlock(ctx->ctx, ctx->out + n);
             }
             ctx->outLen = ciphertextLength;
             break;
@@ -252,7 +248,7 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_ECB_decrypt(struct _xcrypto_ge
         case CIPHER_DES:
             for (size_t n = 0; n < ciphertextLength; n += DES_BLOCK_SIZE) {
                 DesDecryptor(ctx->ctx, (ciphertext + n));
-                GetDesBlock(((struct _xcrypto_des_cipher *)(ctx->ctx)), (ctx->out + n));
+                DesGetBlock(((struct _xcrypto_des_cipher *)(ctx->ctx)), (ctx->out + n));
             }
             ctx->outLen = ciphertextLength;
             break;
@@ -275,6 +271,11 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_CBC_encrypt(struct _xcrypto_ge
         return CIPHER_ERR_MISSING_IV;
     }
 
+    if (ctx->ivLen != CipherBlockSize[cipher]) {
+        ctx->error = CIPHER_ERR_INVALID_IV_SIZE;
+        return CIPHER_ERR_INVALID_IV_SIZE;
+    }
+
     if (plaintextLength % CipherBlockSize[cipher] != 0) {
         ctx->error = CIPHER_ERR_INVALID_CIPHERTEXT_SIZE;
         return CIPHER_ERR_INVALID_CIPHERTEXT_SIZE;
@@ -285,8 +286,6 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_CBC_encrypt(struct _xcrypto_ge
         return CIPHER_ERR_BUFFER_OVERFLOW;
     }
 
-    memset(ctx->out, 0, plaintextLength);
-
     uint8_t *block;
     block = ctx->iv;
 
@@ -295,7 +294,7 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_CBC_encrypt(struct _xcrypto_ge
             for (size_t n = 0; n < plaintextLength; n += AES_BLOCK_SIZE) {
                 _bitwise_xor(block, (plaintext + n), AES_BLOCK_SIZE);
                 AesEncryptor(ctx->ctx, block);
-                memcpy((ctx->out + n), ((struct _xcrypto_aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
+                AesGetBlock(ctx->ctx, ctx->out + n);
                 memcpy(block, (ctx->out + n), AES_BLOCK_SIZE);
             }
             ctx->outLen = plaintextLength;
@@ -305,7 +304,7 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_CBC_encrypt(struct _xcrypto_ge
             for (size_t n = 0; n < plaintextLength; n += DES_BLOCK_SIZE) {
                 _bitwise_xor(block, (plaintext + n), DES_BLOCK_SIZE);
                 DesEncryptor(((struct _xcrypto_des_cipher *)(ctx->ctx)), block);
-                GetDesBlock(((struct _xcrypto_des_cipher *)(ctx->ctx)), (ctx->out + n));
+                DesGetBlock(((struct _xcrypto_des_cipher *)(ctx->ctx)), (ctx->out + n));
                 memcpy(block, (ctx->out + n), DES_BLOCK_SIZE);
             }
             ctx->outLen = plaintextLength;
@@ -329,6 +328,11 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_CBC_decrypt(struct _xcrypto_ge
         return CIPHER_ERR_MISSING_IV;
     }
 
+    if (ctx->ivLen != CipherBlockSize[cipher]) {
+        ctx->error = CIPHER_ERR_INVALID_IV_SIZE;
+        return CIPHER_ERR_INVALID_IV_SIZE;
+    }
+
     if (ciphertextLength % CipherBlockSize[cipher] != 0) {
         ctx->error = CIPHER_ERR_INVALID_PLAINTEXT_SIZE;
         return CIPHER_ERR_INVALID_PLAINTEXT_SIZE;
@@ -339,8 +343,6 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_CBC_decrypt(struct _xcrypto_ge
         return CIPHER_ERR_BUFFER_OVERFLOW;
     }
 
-    memset(ctx->out, 0, ciphertextLength);
-
     uint8_t *block;
     block = ctx->iv;
 
@@ -348,7 +350,7 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_CBC_decrypt(struct _xcrypto_ge
         case CIPHER_AES:
             for (size_t n = 0; n < ciphertextLength; n += AES_BLOCK_SIZE) {
                 AesDecryptor(ctx->ctx, (ciphertext + n));
-                memcpy((ctx->out + n), ((struct _xcrypto_aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
+                AesGetBlock(ctx->ctx, ctx->out + n);
                 _bitwise_xor((ctx->out + n), block, AES_BLOCK_SIZE);
                 memcpy(block, (ciphertext + n), AES_BLOCK_SIZE);
             }
@@ -358,7 +360,7 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_CBC_decrypt(struct _xcrypto_ge
         case CIPHER_DES:
             for (size_t n = 0; n < ciphertextLength; n += DES_BLOCK_SIZE) {
                 DesDecryptor(ctx->ctx, (ciphertext + n));
-                GetDesBlock(((struct _xcrypto_des_cipher *)(ctx->ctx)), (ctx->out + n));
+                DesGetBlock(((struct _xcrypto_des_cipher *)(ctx->ctx)), (ctx->out + n));
                 _bitwise_xor((ctx->out + n), block, DES_BLOCK_SIZE);
                 memcpy(block, (ciphertext + n), DES_BLOCK_SIZE);
             }
@@ -384,35 +386,43 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_CTR_encrypt(struct _xcrypto_ge
         return CIPHER_ERR_MISSING_IV;
     }
 
+    if (ctx->ivLen > CipherBlockSize[cipher]) {
+        ctx->error = CIPHER_ERR_INVALID_IV_SIZE;
+        return CIPHER_ERR_INVALID_IV_SIZE;
+    }
+
     if (plaintextLength > ctx->maxOutLen) {
         ctx->error = CIPHER_ERR_BUFFER_OVERFLOW;
         return CIPHER_ERR_BUFFER_OVERFLOW;
     }
 
-    memset(ctx->out, 0, plaintextLength);
-
     uint8_t nonce[16];
+    uint8_t tmp[16];
     size_t nonceIdx;
     size_t counterSize;
     size_t n;
 
-    nonceIdx = ctx->ivLen;
-    counterSize = CipherBlockSize[ctx->cipher] - nonceIdx;
-    memset(nonce, 0, 16);
+    if ((nonceIdx = ctx->ivLen) == CipherBlockSize[cipher])
+        counterSize = CipherBlockSize[cipher];
+    else
+        counterSize = CipherBlockSize[cipher] - nonceIdx;
+    
+    memset(nonce, 0, CipherBlockSize[cipher]);
     memcpy(nonce, ctx->iv, ctx->ivLen);
 
     switch (cipher) {
         case CIPHER_AES:
             for (n = 0; n < (plaintextLength - (plaintextLength % AES_BLOCK_SIZE)); n += AES_BLOCK_SIZE) {
                 AesEncryptor(ctx->ctx, nonce);
-                memcpy((ctx->out + n), ((struct _xcrypto_aes_cipher *)(ctx->ctx))->state, AES_BLOCK_SIZE);
+                AesGetBlock(ctx->ctx, ctx->out + n);
                 _bitwise_xor((ctx->out + n), (plaintext + n), AES_BLOCK_SIZE);
                 _inc_nonce(nonce + nonceIdx, counterSize);
             }
 
             if (plaintextLength % AES_BLOCK_SIZE != 0) {
                 AesEncryptor(ctx->ctx, nonce);
-                memcpy((ctx->out + n), ((struct _xcrypto_aes_cipher *)(ctx->ctx))->state, (plaintextLength % AES_BLOCK_SIZE));
+                AesGetBlock(ctx->ctx, tmp);
+                memcpy(ctx->out + n, tmp, (plaintextLength % AES_BLOCK_SIZE));
                 _bitwise_xor((ctx->out + n), (plaintext + n), (plaintextLength % AES_BLOCK_SIZE));
                 _inc_nonce(nonce + nonceIdx, counterSize);
             }
@@ -423,16 +433,88 @@ static enum _xcrypto_cipher_op_state _CIPHER_MODE_CTR_encrypt(struct _xcrypto_ge
         case CIPHER_DES:
             for (n = 0; n < (plaintextLength - (plaintextLength % DES_BLOCK_SIZE)); n += DES_BLOCK_SIZE) {
                 DesEncryptor(ctx->ctx, nonce);
-                GetDesBlock(ctx->ctx, (ctx->out + n));
+                DesGetBlock(ctx->ctx, (ctx->out + n));
                 _bitwise_xor((ctx->out + n), (plaintext + n), DES_BLOCK_SIZE);
                 _inc_nonce(nonce + nonceIdx, counterSize);
             }
 
             if (plaintextLength % DES_BLOCK_SIZE != 0) {
                 DesEncryptor(ctx->ctx, nonce);
-                GetDesBlock(ctx->ctx, (ctx->out + n));
+                DesGetBlock(ctx->ctx, tmp);
+                memcpy((ctx->out + n), tmp, (plaintextLength % DES_BLOCK_SIZE));
                 _bitwise_xor((ctx->out + n), (plaintext + n), (plaintextLength % DES_BLOCK_SIZE));
                 _inc_nonce(nonce + nonceIdx, counterSize);
+            }
+
+            ctx->outLen = plaintextLength;
+            break;
+        
+        default:
+            ctx->error = CIPHER_ERR_UNSUPPORTED_ALGO;
+            return CIPHER_ERR_UNSUPPORTED_ALGO;
+    }
+
+    ctx->error = CIPHER_SUCCESS;
+    return CIPHER_SUCCESS;
+}
+
+
+static enum _xcrypto_cipher_op_state _CIPHER_MODE_OFB_encrypt(struct _xcrypto_generic_cipher *ctx, const uint8_t *plaintext, size_t plaintextLength) {
+    Ciphers cipher = ctx->cipher;
+
+    if (!ctx->iv) {
+        ctx->error = CIPHER_ERR_MISSING_IV;
+        return CIPHER_ERR_MISSING_IV;
+    }
+
+    if (ctx->ivLen != CipherBlockSize[cipher]) {
+        ctx->error = CIPHER_ERR_INVALID_IV_SIZE;
+        return CIPHER_ERR_INVALID_IV_SIZE;
+    }
+
+    if (plaintextLength > ctx->maxOutLen) {
+        ctx->error = CIPHER_ERR_BUFFER_OVERFLOW;
+        return CIPHER_ERR_BUFFER_OVERFLOW;
+    }
+
+    uint8_t nonce[16];
+    uint8_t tmp[16];
+    size_t n;
+
+    memcpy(nonce, ctx->iv, CipherBlockSize[cipher]);
+
+    switch (cipher) {
+        case CIPHER_AES:
+            for (n = 0; n < (plaintextLength - (plaintextLength % AES_BLOCK_SIZE)); n += AES_BLOCK_SIZE) {
+                AesEncryptor(ctx->ctx, nonce);
+                AesGetBlock(ctx->ctx, nonce);
+                memcpy(ctx->out + n, nonce, AES_BLOCK_SIZE);
+                _bitwise_xor((ctx->out + n), (plaintext + n), AES_BLOCK_SIZE);
+            }
+
+            if (plaintextLength % AES_BLOCK_SIZE != 0) {
+                AesEncryptor(ctx->ctx, nonce);
+                AesGetBlock(ctx->ctx, nonce);
+                memcpy(ctx->out + n, nonce, (plaintextLength % AES_BLOCK_SIZE));
+                _bitwise_xor((ctx->out + n), (plaintext + n), (plaintextLength % AES_BLOCK_SIZE));
+            }
+
+            ctx->outLen = plaintextLength;
+            break;
+
+        case CIPHER_DES:
+            for (n = 0; n < (plaintextLength - (plaintextLength % DES_BLOCK_SIZE)); n += DES_BLOCK_SIZE) {
+                DesEncryptor(ctx->ctx, nonce);
+                DesGetBlock(ctx->ctx, nonce);
+                memcpy(ctx->out + n, nonce, DES_BLOCK_SIZE);
+                _bitwise_xor((ctx->out + n), (plaintext + n), DES_BLOCK_SIZE);
+            }
+
+            if (plaintextLength % DES_BLOCK_SIZE != 0) {
+                DesEncryptor(ctx->ctx, nonce);
+                DesGetBlock(ctx->ctx, tmp);
+                memcpy((ctx->out + n), tmp, (plaintextLength % DES_BLOCK_SIZE));
+                _bitwise_xor((ctx->out + n), (plaintext + n), (plaintextLength % DES_BLOCK_SIZE));
             }
 
             ctx->outLen = plaintextLength;
@@ -485,6 +567,11 @@ enum _xcrypto_cipher_op_state CipherEncrypt(struct _xcrypto_generic_cipher *ctx,
                 return state;
             break;
         
+        case CIPHER_MODE_OFB:
+            if ((state = _CIPHER_MODE_OFB_encrypt(ctx, plaintext, plaintextLength)) != CIPHER_SUCCESS)
+                return state;
+            break;
+        
         default:
             ctx->error = CIPHER_ERR_UNSUPPORTED_MODE;
             return CIPHER_ERR_UNSUPPORTED_MODE;
@@ -529,6 +616,11 @@ enum _xcrypto_cipher_op_state CipherDecrypt(struct _xcrypto_generic_cipher *ctx,
         
         case CIPHER_MODE_CTR:
             if ((state = _CIPHER_MODE_CTR_encrypt(ctx, ciphertext, ciphertextLength)) != CIPHER_SUCCESS)
+                return state;
+            break;
+
+        case CIPHER_MODE_OFB:
+            if ((state = _CIPHER_MODE_OFB_encrypt(ctx, ciphertext, ciphertextLength)) != CIPHER_SUCCESS)
                 return state;
             break;
         
@@ -603,6 +695,7 @@ enum _xcrypto_cipher_op_state CipherGetError(struct _xcrypto_generic_cipher *ctx
 
 const uint8_t *CipherGetErrorString[] = {
     [CIPHER_SUCCESS] = "Success",
+    [CIPHER_ERR_NOT_IMPLEMENTED] = "Functionality not yet implemented",
     [CIPHER_ERR_INVALID_ARG] = "Invalid argument",
     [CIPHER_ERR_NULL_PTR] = "Parameter with null pointer",
     [CIPHER_ERR_UNSUPPORTED_ALGO] = "Algorithm not supported or non-existent",
@@ -615,6 +708,7 @@ const uint8_t *CipherGetErrorString[] = {
     [CIPHER_ERR_INVALID_PLAINTEXT_SIZE] = "Invalid plaintext size (try with padding)",
     [CIPHER_ERR_INVALID_CIPHERTEXT_SIZE] = "Invalid ciphertext size",
     [CIPHER_ERR_MISSING_IV] = "Required IV missing ( try CipherSetIV )",
+    [CIPHER_ERR_INVALID_IV_SIZE] = "The size of the IV does not match the AES block size.",
     [CIPHER_ERR_BUFFER_OVERFLOW] = "The buffer size is too small"
 };
 

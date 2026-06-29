@@ -141,65 +141,68 @@ static void UnShiftRows( struct _xcrypto_aes_cipher *cipher ) {
 }
 
 
-static void MixColumns( struct _xcrypto_aes_cipher *cipher ) {
-    uint8_t r[4];
-    uint8_t a[4];
-    uint8_t b[4];
-    uint8_t h;
-
-    for (uint8_t cnt = 0; cnt < 16; cnt += 4) {
-        memcpy(r, (cipher->state + cnt), 4);
-
-        for (uint8_t c = 0; c < 4; c++) {
-            a[c] = r[c];
-            h = r[c] >> 7;
-            b[c] = r[c] << 1;
-            b[c] ^= h * 0x1B;
-        }
-
-        r[0] = b[0] ^ a[3] ^ a[2] ^ b[1] ^ a[1];
-        r[1] = b[1] ^ a[0] ^ a[3] ^ b[2] ^ a[2];
-        r[2] = b[2] ^ a[1] ^ a[0] ^ b[3] ^ a[3];
-        r[3] = b[3] ^ a[2] ^ a[1] ^ b[0] ^ a[0];
-        
-        memcpy((cipher->state + cnt), r, 4);
-    }
+static inline uint8_t xtime( uint8_t x ) {
+    return (x << 1) ^ ((x & 0x80) ? 0x1B : 0);
 }
 
 
-static uint8_t gmul( uint8_t a, uint8_t b ) {
-    uint8_t p = 0;
-    uint8_t hi_bit_set;
-    for (int i = 0; i < 8; i++) {
-        if (b & 1)
-            p ^= a;
-        hi_bit_set = a & 0x80;
-        a <<= 1;
-        if (hi_bit_set)
-            a ^= 0x1B;
-        b >>= 1;
+static inline void inv_mul( uint8_t a, uint8_t *m9, uint8_t *m11, uint8_t *m13, uint8_t *m14 ) {
+    uint8_t x2 = xtime(a);
+    uint8_t x4 = xtime(x2);
+    uint8_t x8 = xtime(x4);
+
+    *m9  = x8 ^ a;
+    *m11 = x8 ^ x2 ^ a;
+    *m13 = x8 ^ x4 ^ a;
+    *m14 = x8 ^ x4 ^ x2;
+}
+
+
+static void MixColumns( struct _xcrypto_aes_cipher *cipher ) {
+    uint8_t *s = cipher->state;
+
+    for (int c = 0; c < 16; c += 4) {
+        uint8_t a0 = s[c];
+        uint8_t a1 = s[c + 1];
+        uint8_t a2 = s[c + 2];
+        uint8_t a3 = s[c + 3];
+
+        uint8_t x0 = xtime(a0);
+        uint8_t x1 = xtime(a1);
+        uint8_t x2 = xtime(a2);
+        uint8_t x3 = xtime(a3);
+
+        s[c]     = x0 ^ (x1 ^ a1) ^ a2 ^ a3;
+        s[c + 1] = a0 ^ x1 ^ (x2 ^ a2) ^ a3;
+        s[c + 2] = a0 ^ a1 ^ x2 ^ (x3 ^ a3);
+        s[c + 3] = (x0 ^ a0) ^ a1 ^ a2 ^ x3;
     }
-    return p;
 }
 
 
 static void UnMixColumns( struct _xcrypto_aes_cipher *cipher ) {
-    if (!cipher)
-        return;
-
     uint8_t *s = cipher->state;
-    uint8_t col[4];
 
     for (int c = 0; c < 16; c += 4) {
-        col[0] = s[c];
-        col[1] = s[c + 1];
-        col[2] = s[c + 2];
-        col[3] = s[c + 3];
+        uint8_t a0 = s[c];
+        uint8_t a1 = s[c + 1];
+        uint8_t a2 = s[c + 2];
+        uint8_t a3 = s[c + 3];
 
-        s[c]     = gmul(col[0], 14) ^ gmul(col[1], 11) ^ gmul(col[2], 13) ^ gmul(col[3], 9);
-        s[c + 1] = gmul(col[0], 9)  ^ gmul(col[1], 14) ^ gmul(col[2], 11) ^ gmul(col[3], 13);
-        s[c + 2] = gmul(col[0], 13) ^ gmul(col[1], 9)  ^ gmul(col[2], 14) ^ gmul(col[3], 11);
-        s[c + 3] = gmul(col[0], 11) ^ gmul(col[1], 13) ^ gmul(col[2], 9)  ^ gmul(col[3], 14);
+        uint8_t a09, a11, a13, a14;
+        uint8_t b09, b11, b13, b14;
+        uint8_t c09, c11, c13, c14;
+        uint8_t d09, d11, d13, d14;
+
+        inv_mul(a0, &a09, &a11, &a13, &a14);
+        inv_mul(a1, &b09, &b11, &b13, &b14);
+        inv_mul(a2, &c09, &c11, &c13, &c14);
+        inv_mul(a3, &d09, &d11, &d13, &d14);
+
+        s[c]     = a14 ^ b11 ^ c13 ^ d09;
+        s[c + 1] = a09 ^ b14 ^ c11 ^ d13;
+        s[c + 2] = a13 ^ b09 ^ c14 ^ d11;
+        s[c + 3] = a11 ^ b13 ^ c09 ^ d14;
     }
 }
 
